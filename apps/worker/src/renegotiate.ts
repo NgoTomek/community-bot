@@ -18,6 +18,7 @@ import {
   SCRIBE_STANDING_RULES,
   botSpeakerName,
   communityBotName,
+  organiserSpeakerName,
 } from "@community-bots/core";
 import type { Backend } from "@community-bots/core/backends";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -29,6 +30,7 @@ import {
   listApprovals,
   listMessages,
   loadCommunity,
+  loadDeal,
   loadRun,
   markRunError,
   retargetApprovals,
@@ -46,6 +48,20 @@ export class LeaveRun extends Error {
     super(message);
     this.name = "LeaveRun";
   }
+}
+
+/**
+ * An organiser post stored after the current deal went out (while responses were pending).
+ * No round has read it yet, so the OrganiserChannel feeds it to this round as guidance or as
+ * that community's reply. The worker's own "asked for changes" notes never count.
+ */
+export function isUnseenPost(
+  row: Pick<MessageRecord, "role" | "text" | "created_at">,
+  roundStartedAt: string | null,
+  workerNotes: ReadonlySet<string>,
+): boolean {
+  if (row.role !== "human" || !roundStartedAt || workerNotes.has(row.text)) return false;
+  return Date.parse(row.created_at) > Date.parse(roundStartedAt);
 }
 
 export type RenegotiateOutcome =
@@ -142,17 +158,33 @@ async function revise(opts: {
     maxGroupSize: community.card.constraints.maxGroupSize,
   }));
 
+  await opts.onProgress?.("Reading the notes");
+  const notes: { communityId: string; name: string; text: string }[] = [];
+  for (const approval of await listApprovals(client, run.id)) {
+    if (approval.status !== "renegotiate") continue;
+    const note = approval.note?.trim();
+    if (!note) continue;
+    const known = everyone.find((community) => community.id === approval.community_id);
+    const loaded = known ?? (await loadCommunity(client, approval.community_id));
+    const name = loaded?.name ?? approval.community_id;
+    notes.push({ communityId: approval.community_id, name, text: `The organiser of ${name} asked for changes: ${note}` });
+  }
+  const noteTexts = new Set(notes.map((note) => note.text));
+  const roundStartedAt = run.deal_id ? ((await loadDeal(client, run.deal_id))?.created_at ?? null) : null;
+
   const control = createRunControl(client, run.id);
   const transcript: ChatMessage[] = [];
   for (const row of await listMessages(client, run.id)) {
+    if (isUnseenPost(row, roundStartedAt, noteTexts)) continue;
     if (row.role === "human") control.ignore(row.id);
     transcript.push(toChat(row));
   }
   const channel = new OrganiserChannel(control, {
     onPost(post) {
+      const spokenFor = post.asCommunity ? everyone.find((community) => community.id === post.asCommunity) : undefined;
       transcript.push({
         seq: transcript.length,
-        speaker: "Organiser",
+        speaker: spokenFor ? organiserSpeakerName(spokenFor.name) : "Organiser",
         communityId: post.asCommunity ?? run.lead_id,
         role: "human",
         text: post.text,
@@ -200,21 +232,12 @@ async function revise(opts: {
     return reply.stance;
   };
 
-  await opts.onProgress?.("Reading the notes");
-  const approvals = await listApprovals(client, run.id);
-  for (const approval of approvals) {
-    if (approval.status !== "renegotiate") continue;
-    const note = approval.note?.trim();
-    if (!note) continue;
-    const known = everyone.find((community) => community.id === approval.community_id);
-    const loaded = known ?? (await loadCommunity(client, approval.community_id));
-    const name = loaded?.name ?? approval.community_id;
-    const text = `The organiser of ${name} asked for changes: ${note}`;
+  for (const { communityId, name, text } of notes) {
     if (transcript.some((message) => message.text === text)) continue;
     const message: ChatMessage = {
       seq: transcript.length,
-      speaker: `${name} organiser`,
-      communityId: approval.community_id,
+      speaker: organiserSpeakerName(name),
+      communityId,
       role: "human",
       text,
       stance: null,

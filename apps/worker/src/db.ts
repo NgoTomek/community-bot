@@ -71,6 +71,7 @@ export type MessageRecord = {
   stance: Stance | null;
   evidence: Evidence | null;
   delay_ms: number;
+  created_at: string;
 };
 
 export type DealRecord = {
@@ -79,6 +80,7 @@ export type DealRecord = {
   deal: unknown;
   round: number;
   status: string;
+  created_at: string;
 };
 
 export type LumaRecord = {
@@ -302,6 +304,7 @@ export async function listMessages(client: SupabaseClient, runId: string): Promi
         stance: asStance(row.stance),
         evidence: (row.evidence as Evidence | null) ?? null,
         delay_ms: typeof row.delay_ms === "number" ? row.delay_ms : 0,
+        created_at: typeof row.created_at === "string" ? row.created_at : "",
       },
     ];
   });
@@ -320,7 +323,11 @@ export async function insertDeal(client: SupabaseClient, row: { runId: string; d
 }
 
 export async function loadDeal(client: SupabaseClient, id: string): Promise<DealRecord | null> {
-  const { data, error } = await client.from("deals").select("id,run_id,deal,round,status").eq("id", id).maybeSingle();
+  const { data, error } = await client
+    .from("deals")
+    .select("id,run_id,deal,round,status,created_at")
+    .eq("id", id)
+    .maybeSingle();
   raise(error, "Failed to load deal");
   if (!data) return null;
   const row = data as Record<string, unknown>;
@@ -331,6 +338,7 @@ export async function loadDeal(client: SupabaseClient, id: string): Promise<Deal
     deal: row.deal,
     round: typeof row.round === "number" ? row.round : 1,
     status: typeof row.status === "string" ? row.status : "pending_approval",
+    created_at: typeof row.created_at === "string" ? row.created_at : "",
   };
 }
 
