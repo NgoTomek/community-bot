@@ -1,64 +1,31 @@
-// npm run seed:sample: loads the fixed mock sample run from supabase/seed/sample.json (see
-// docs/SAMPLE.md) with runs.is_sample = true, so npm run demo:reset can put it back later.
-// Re-running it restores the sample: round 1, approvals pending, fixed tokens, no RSVPs.
-import {
-  addDays,
-  allowedDaysForAll,
-  checkEvidence,
-  messageDelayMs,
-  nextAllowedDate,
-  todayIso,
-  type Card,
-  type Deal,
-  type Stance,
-} from "@community-bots/core";
-import { createClient } from "@supabase/supabase-js";
-import { config } from "dotenv";
-import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { checkEvidence, messageDelayMs } from "@community-bots/core";
+import { createServiceClient, listDealsForRun } from "../db";
+import { readableError } from "../errors";
+import { requireServiceRole } from "../env";
+import { loadSampleDeal } from "../sampleFixture";
 
-type Sample = {
-  communities: { inboxToken: string; card: Card }[];
-  run: { id: string; leadId: string; partnerIds: string[]; need: string };
-  deal: { id: string; terms: Omit<Deal, "date"> };
-  approvalTokens: Record<string, string>;
-  messages: { speaker: string; communityId: string; role: "human" | "bot"; text: string; stance: Stance | null; quote: string | null }[];
-  announcements: Record<string, string>;
-};
+const { url, key } = requireServiceRole();
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
-config({ path: join(repoRoot, "apps/worker/.env"), quiet: true });
-config({ path: join(repoRoot, ".env"), quiet: true });
-
-const url = process.env.SUPABASE_URL?.trim();
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-if (!url || !serviceRoleKey) {
-  console.error("seed:sample needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (apps/worker/.env or the root .env).");
+let loaded: ReturnType<typeof loadSampleDeal>;
+try {
+  loaded = loadSampleDeal();
+} catch (error) {
+  console.error(`seed:sample ${readableError(error)}`);
   process.exit(1);
 }
+const { sample, deal, date } = loaded;
 
-const sample = JSON.parse(readFileSync(join(repoRoot, "supabase/seed/sample.json"), "utf8")) as Sample;
-const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-const cards = new Map(sample.communities.map((c) => [c.card.id, c.card]));
+const db = createServiceClient(url, key);
+const { run } = sample;
+const cards = new Map(sample.communities.map((entry) => [entry.card.id, entry.card]));
 
-async function step(what: string, request: PromiseLike<{ error: { message: string } | null }>) {
+async function step(what: string, request: PromiseLike<{ error: { message: string } | null }>): Promise<void> {
   const { error } = await request;
   if (error) {
-    console.error(`seed:sample failed to ${what}: ${error.message}`);
+    console.error(`seed:sample failed to ${what}: ${readableError(new Error(error.message))}`);
     process.exit(1);
   }
 }
-
-// The first day every community allows, at least 14 days from today (system clock).
-const allowed = allowedDaysForAll(sample.communities.map((c) => c.card.constraints.days));
-const date = nextAllowedDate(addDays(todayIso(), 14), allowed);
-if (!date) {
-  console.error("seed:sample: the sample communities share no weekday.");
-  process.exit(1);
-}
-const deal: Deal = { ...sample.deal.terms, date };
-const { run } = sample;
 
 await step(
   "save the communities",
@@ -71,12 +38,13 @@ await step(
       source_urls: card.sourceUrls,
       updated_at: new Date().toISOString(),
     })),
+    { onConflict: "id" },
   ),
 );
 await step(
   "save the inbox tokens",
   db.from("community_secrets").upsert(
-    sample.communities.map((c) => ({ community_id: c.card.id, inbox_token: c.inboxToken })),
+    sample.communities.map((entry) => ({ community_id: entry.card.id, inbox_token: entry.inboxToken })),
     { onConflict: "community_id" },
   ),
 );
@@ -98,8 +66,25 @@ await step(
     is_sample: true,
   }),
 );
-await step("save the deal", db.from("deals").upsert({ id: sample.deal.id, run_id: run.id, round: 1, status: "pending_approval", deal }));
-await step("point the run at the deal", db.from("runs").update({ deal_id: sample.deal.id }).eq("id", run.id));
+await step(
+  "save the deal",
+  db.from("deals").upsert({ id: sample.deal.id, run_id: run.id, round: 1, status: "pending_approval", deal }),
+);
+await step(
+  "point the run at the deal",
+  db.from("runs").update({
+    deal_id: sample.deal.id,
+    status: "pending_approval",
+    round: 1,
+    consensus: true,
+    decline_reason: null,
+    typing: null,
+    error: null,
+    control: "running",
+    is_sample: true,
+    backend: "mock",
+  }).eq("id", run.id),
+);
 await step(
   "save the approvals",
   db.from("approvals").upsert(
@@ -118,33 +103,51 @@ await step(
     { onConflict: "run_id,community_id" },
   ),
 );
+
+let dealIds: string[] = [];
+try {
+  dealIds = (await listDealsForRun(db, run.id)).map((row) => row.id);
+} catch (error) {
+  console.error(`seed:sample failed to list deals: ${readableError(error)}`);
+  process.exit(1);
+}
+if (dealIds.length > 0) {
+  await step("clear sample RSVPs", db.from("rsvps").delete().in("deal_id", dealIds));
+  await step("clear sample Luma rows", db.from("luma_events").delete().in("deal_id", dealIds));
+}
+await step("drop later sample deals", db.from("deals").delete().eq("run_id", run.id).neq("id", sample.deal.id));
 await step("clear the sample chat", db.from("messages").delete().eq("run_id", run.id));
 await step(
   "save the sample chat",
   db.from("messages").insert(
-    sample.messages.map((m, seq) => ({
+    sample.messages.map((message, seq) => ({
       run_id: run.id,
       seq,
-      speaker: m.speaker,
-      community_id: m.communityId,
-      role: m.role,
-      text: m.text,
-      stance: m.stance,
-      evidence: m.quote ? checkEvidence(m.quote, cards.get(m.communityId)!) : null,
-      delay_ms: messageDelayMs(m.text),
+      speaker: message.speaker,
+      community_id: message.communityId,
+      role: message.role,
+      text: message.text,
+      stance: message.stance,
+      evidence: message.quote ? checkEvidence(message.quote, cards.get(message.communityId)!) : null,
+      delay_ms: messageDelayMs(message.text),
     })),
   ),
 );
 await step(
   "save the announcements",
   db.from("announcements").upsert(
-    Object.entries(sample.announcements).map(([communityId, text]) => ({ deal_id: sample.deal.id, community_id: communityId, text })),
+    Object.entries(sample.announcements).map(([communityId, text]) => ({
+      deal_id: sample.deal.id,
+      community_id: communityId,
+      text,
+    })),
     { onConflict: "deal_id,community_id" },
   ),
 );
-await step("remove sample RSVPs", db.from("rsvps").delete().eq("deal_id", sample.deal.id));
 
-console.log(`Loaded sample run ${run.id} (is_sample) with deal ${sample.deal.id} on ${date}.`);
-for (const { card, inboxToken } of sample.communities) {
-  console.log(`  ${card.name.padEnd(14)} /r/${sample.approvalTokens[card.id]}  /inbox/${inboxToken}`);
+console.log(`Loaded sample run ${run.id} on ${date}.`);
+for (const entry of sample.communities) {
+  const token = sample.approvalTokens[entry.card.id];
+  console.log(`/r/${token}`);
+  console.log(`/inbox/${entry.inboxToken}`);
 }

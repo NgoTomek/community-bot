@@ -11,6 +11,7 @@
     "export-run": "tsx src/scripts/exportRun.ts",
     "demo:reset": "tsx src/scripts/demoReset.ts",
     "seed:sample": "tsx src/scripts/seedSample.ts",
+    "test:rpc": "tsx src/scripts/testRpc.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
