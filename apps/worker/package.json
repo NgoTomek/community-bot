@@ -1,0 +1,20 @@
+{
+  "name": "@community-bots/worker",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Polls the Supabase jobs table, claims one job at a time and runs the Bots.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "seed": "tsx src/scripts/seed.ts",
+    "export-run": "tsx src/scripts/exportRun.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@community-bots/core": "*",
+    "@supabase/supabase-js": "^2.118.0",
+    "dotenv": "^17.0.0",
+    "zod": "^4.6.7"
+  }
+}

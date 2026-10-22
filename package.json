@@ -1,0 +1,37 @@
+{
+  "name": "community-bots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bots for community organisers: draft a community card, match with other communities, let their Bots negotiate a joint event, approve it, publish it.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @community-bots/web",
+    "worker": "npm run start -w @community-bots/worker",
+    "seed": "npm run seed -w @community-bots/worker --",
+    "export-run": "npm run export-run -w @community-bots/worker --",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run typecheck && npm run build -w @community-bots/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@types/node": "^22.10.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
+}
