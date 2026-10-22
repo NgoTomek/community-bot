@@ -9,6 +9,7 @@
     "start": "tsx src/index.ts",
     "seed": "tsx src/scripts/seed.ts",
     "export-run": "tsx src/scripts/exportRun.ts",
+    "demo:reset": "tsx src/scripts/demoReset.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
