@@ -295,7 +295,7 @@ export function TryIt({ community }: { community: Community }) {
     <section className="mt-16" aria-labelledby="try-it-title">
       <p className="eyebrow">Try it</p>
       <h2 id="try-it-title" className="mt-1 font-display text-2xl sm:text-3xl">
-        Meet {community.name}'s Bot
+        Meet the {community.name} Bot
       </h2>
       <p className="mt-2 max-w-2xl leading-relaxed text-muted">
         Describe something {community.name} needs. The Matchmaker ranks partner communities using only what is on their cards, and every reason links to the quote it relies

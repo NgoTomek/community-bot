@@ -125,7 +125,7 @@ function RequestView({ request, token, runId, run, refreshError }: { request: Re
               <Links runId={runId} dealId={dealId} showEvent={false} />
             </div>
           ) : status === "pending" && deal ? (
-            <div className="card border-accent/40 p-4 sm:p-5">
+            <div className="card border-accent/40! p-4 sm:p-5">
               {negotiating ? <p className="mb-3 text-sm text-muted">The Bots are negotiating a new round. You can decide once they finish.</p> : null}
               <DecisionForm
                 token={token}

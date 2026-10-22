@@ -143,7 +143,7 @@ function DecisionFormInner({ token, round, label = "Your decision", disabledReas
             <Slot reason={reason}>
               <button
                 type="button"
-                className={`btn w-full ${panel === "renegotiate" ? "border-ink bg-sunken" : ""}`}
+                className={`btn w-full ${panel === "renegotiate" ? "border-ink! bg-sunken!" : ""}`}
                 disabled={locked}
                 aria-expanded={panel === "renegotiate"}
                 aria-controls={panel === "renegotiate" ? panelId("renegotiate") : undefined}
@@ -156,7 +156,7 @@ function DecisionFormInner({ token, round, label = "Your decision", disabledReas
             <Slot reason={reason}>
               <button
                 type="button"
-                className={`btn btn-danger w-full ${panel === "declined" ? "bg-bad-soft" : ""}`}
+                className={`btn btn-danger w-full ${panel === "declined" ? "bg-bad-soft!" : ""}`}
                 disabled={locked}
                 aria-expanded={panel === "declined"}
                 aria-controls={panel === "declined" ? panelId("declined") : undefined}

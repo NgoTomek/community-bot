@@ -71,7 +71,7 @@ function GuessActions({ id, label, onCheck }: { id: string; label: string; onChe
 
 /** Grows with its content where the browser supports field-sizing. */
 function AutoTextarea({ className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea rows={1} {...props} className={`input field-sizing-content ${className}`} />;
+  return <textarea rows={1} {...props} className={`input field-sizing-content resize-none ${className}`} />;
 }
 
 const guessClass = (value: string) => (isGuess(value) ? "guess rounded-lg!" : "");

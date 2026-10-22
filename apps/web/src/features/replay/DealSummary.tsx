@@ -99,7 +99,7 @@ export function ReplayEnd({
 }) {
   const titleId = useId();
   return (
-    <section ref={sectionRef} aria-labelledby={titleId} className="card mt-8 scroll-mb-32 scroll-mt-40 overflow-hidden sm:scroll-mb-8">
+    <section ref={sectionRef} aria-labelledby={titleId} className="card mt-8 scroll-mb-[calc(7rem+env(safe-area-inset-bottom))] scroll-mt-28 overflow-hidden sm:scroll-mb-8 sm:scroll-mt-48">
       <div className="space-y-2 border-b border-line px-5 py-5 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           <p className="eyebrow">End of the recording</p>

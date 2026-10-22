@@ -273,7 +273,7 @@ function CheckStep({
   const status = !editor.valid
     ? `Fix ${plural(errorCount, "field")} to confirm.`
     : editor.guesses
-      ? `${plural(editor.guesses, "guess", "guesses")} left. They stay highlighted on your card until checked.`
+      ? `${plural(editor.guesses, "guess", "guesses")} left.`
       : "Ready to confirm.";
 
   return (
@@ -306,6 +306,7 @@ function CheckStep({
       <StickyBar>
         <p className={`mr-auto text-sm ${editor.valid ? "text-muted" : "text-bad"}`} aria-live="polite">
           {status}
+          {editor.valid && editor.guesses ? <span className="max-sm:hidden"> They stay highlighted on your card until checked.</span> : null}
         </p>
         <button type="button" className="btn btn-ghost" onClick={() => (editor.dirty ? setDialog("restart") : onStartOver())}>
           Start over
@@ -326,7 +327,7 @@ function CheckStep({
         open={dialog === "replace"}
         onClose={() => setDialog(null)}
         onConfirm={() => void save()}
-        title={`Replace ${taken?.name ?? "this community"}'s card?`}
+        title={`Replace the card for ${taken?.name ?? "this community"}?`}
         body={`A community already uses the profile link /c/${editor.id}. Confirming replaces its card with this one, and its Bot uses the new card from the next negotiation.`}
         confirmLabel="Replace card"
         destructive

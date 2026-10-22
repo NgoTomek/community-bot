@@ -170,7 +170,7 @@ export function ReplayView({ bundle, demo }: { bundle: ReplayBundle; demo: boole
     window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }, [restart]);
 
-  const style = { "--replay-top": `${headerHeight + 12}px` } as CSSProperties;
+  const style = { "--replay-top": `${headerHeight}px` } as CSSProperties;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12" style={style}>
@@ -178,8 +178,10 @@ export function ReplayView({ bundle, demo }: { bundle: ReplayBundle; demo: boole
 
       {hasPosts ? (
         <>
-          <div className="sticky bottom-0 z-20 order-last -mx-4 mt-6 border-t border-line bg-bg/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md sm:top-(--replay-top) sm:bottom-auto sm:order-none sm:mx-0 sm:mt-8 sm:rounded-xl sm:border sm:bg-surface/95 sm:p-3 sm:shadow-sm">
-            <ReplayControls player={player} shown={frame.posts.shown} total={frame.posts.total} onRestart={onRestart} tooltipSide={desktop ? "bottom" : "top"} />
+          <div className="sticky bottom-0 z-20 order-last -mx-4 mt-6 border-t border-line bg-bg/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md sm:top-(--replay-top) sm:bottom-auto sm:order-none sm:mx-0 sm:mt-5 sm:border-t-0 sm:bg-bg sm:px-0 sm:pb-0 sm:backdrop-blur-none">
+            <div className="sm:rounded-xl sm:border sm:border-line sm:bg-surface sm:p-3 sm:shadow-sm">
+              <ReplayControls player={player} shown={frame.posts.shown} total={frame.posts.total} onRestart={onRestart} tooltipSide={desktop ? "bottom" : "top"} />
+            </div>
           </div>
           <p className="present-hide mt-2 hidden text-xs text-faint sm:block">
             <kbd className="kbd">Space</kbd> plays or pauses, <kbd className="kbd">→</kbd> shows the next post.
@@ -188,7 +190,7 @@ export function ReplayView({ bundle, demo }: { bundle: ReplayBundle; demo: boole
           <section aria-label="Recorded conversation" className="mt-8">
             <Timeline items={items} cards={data.cards} names={data.names} typing={typing} myCommunityIds={communityIds} onOpenDeal={setOpenRound} />
             {compiling ? <CompilingRow /> : null}
-            <div ref={bottomRef} className="h-px scroll-mb-32 sm:scroll-mb-8" aria-hidden />
+            <div ref={bottomRef} className="h-px scroll-mb-[calc(7rem+env(safe-area-inset-bottom))] sm:scroll-mb-8" aria-hidden />
           </section>
 
           {finished ? (

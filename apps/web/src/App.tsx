@@ -1,47 +1,63 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Footer, Header } from "./product/Shell";
-import { BackendProvider, PasscodeProvider, PresentSync } from "./product/session";
+import { IdentityProvider } from "./app/identity";
+import { NeedsYouProvider } from "./app/needsYou";
+import { PresenterProvider } from "./app/presenter";
+import { ProjectorProvider } from "./app/projector";
+import { ThemeProvider } from "./app/theme";
+import { Footer } from "./components/Footer";
+import { Header } from "./components/Header";
+import { ToastProvider } from "./components/ui/Toast";
+import EventPage from "./features/event/EventPage";
+import { NewRequestProvider } from "./features/request/NewRequest";
 import Add from "./pages/Add";
-import Community from "./pages/Community";
-import EventPage from "./pages/Event";
-import Home from "./pages/Home";
+import Board from "./pages/Board";
+import CommunityProfile from "./pages/CommunityProfile";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 import ReplayPage from "./pages/Replay";
-import Request from "./pages/Request";
-import Run from "./pages/Run";
+import RequestLink from "./pages/RequestLink";
+import Thread from "./pages/Thread";
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
 
 export default function App() {
   return (
     <BrowserRouter basename={basename}>
-      <PresentSync />
-      <PasscodeProvider>
-        <BackendProvider>
-          <div className="app-shell">
-            <a className="skip" href="#content">
-              Skip to content
-            </a>
-            <Header />
-            <main id="content" tabIndex={-1}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/add" element={<Add />} />
-                <Route path="/c/:id" element={<Community />} />
-                <Route path="/c/:id/request" element={<Request />} />
-                <Route path="/run/:runId" element={<Run />} />
-                <Route path="/event/:dealId" element={<EventPage />} />
-                <Route path="/replay/:runId" element={<ReplayPage />} />
-                <Route path="/demo" element={<ReplayPage demo />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </BackendProvider>
-      </PasscodeProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <ProjectorProvider>
+            <PresenterProvider>
+              <IdentityProvider>
+                <NeedsYouProvider>
+                  <NewRequestProvider>
+                    <div className="min-h-screen bg-bg text-text">
+                      <a className="skip" href="#content">
+                        Skip to content
+                      </a>
+                      <Header />
+                      <main id="content" tabIndex={-1}>
+                        <Routes>
+                          <Route path="/" element={<Board />} />
+                          <Route path="/how-it-works" element={<HowItWorks />} />
+                          <Route path="/run/:runId" element={<Thread />} />
+                          <Route path="/event/:dealId" element={<EventPage />} />
+                          <Route path="/r/:token" element={<RequestLink />} />
+                          <Route path="/c/:id" element={<CommunityProfile />} />
+                          <Route path="/add" element={<Add />} />
+                          <Route path="/demo" element={<ReplayPage demo />} />
+                          <Route path="/replay/:runId" element={<ReplayPage />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </main>
+                      <Footer />
+                    </div>
+                  </NewRequestProvider>
+                </NeedsYouProvider>
+              </IdentityProvider>
+            </PresenterProvider>
+          </ProjectorProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
