@@ -16,6 +16,7 @@
     "dev": "npm run dev -w @community-bots/web",
     "worker": "npm run start -w @community-bots/worker",
     "seed": "npm run seed -w @community-bots/worker --",
+    "test:db": "bash supabase/tests/run.sh",
     "export-run": "npm run export-run -w @community-bots/worker --",
     "test": "vitest run",
     "test:watch": "vitest",
