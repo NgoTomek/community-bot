@@ -167,7 +167,7 @@ function ThreadView({ t, run }: { t: ThreadData; run: Run }) {
       </div>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-10">
-        <section id="panel-conversation" aria-label="Conversation" className={tab === "conversation" ? "" : "max-lg:hidden"}>
+        <section id="panel-conversation" data-tour="thread" aria-label="Conversation" className={tab === "conversation" ? "" : "max-lg:hidden"}>
           {needsMe ? (
             <div className="card mb-4 flex items-center gap-3 border-accent/40 bg-accent-soft p-3 lg:hidden">
               <p className="flex-1 text-sm font-medium">Round {run.round} needs your decision</p>
@@ -227,7 +227,7 @@ function DecisionCard({ t, run, needsMe }: { t: ThreadData; run: Run; needsMe: b
 
   if (needsMe && t.myRequest) {
     return (
-      <section className="card border-accent/50 p-5" aria-label="Your decision">
+      <section className="card border-accent/50 p-5" aria-label="Your decision" data-tour="decision">
         <DecisionForm token={t.myRequest.token} round={run.round} label={`Your decision for ${myName}`} onResponded={t.reload} />
       </section>
     );
@@ -258,7 +258,7 @@ function DecisionCard({ t, run, needsMe }: { t: ThreadData; run: Run; needsMe: b
   if (t.myRequest && t.myRequest.status !== "pending") {
     const mine = t.approvals.find((a) => a.communityId === t.myRequest!.communityId);
     return (
-      <section className="card flex items-start gap-3 p-4" aria-label="Your decision">
+      <section className="card flex items-start gap-3 p-4" aria-label="Your decision" data-tour="decision">
         <Avatar id={t.myRequest.communityId} name={myName} size={28} />
         <div className="min-w-0 flex-1 text-sm">
           <p className="flex flex-wrap items-center gap-2">
@@ -274,7 +274,7 @@ function DecisionCard({ t, run, needsMe }: { t: ThreadData; run: Run; needsMe: b
 
   if (t.myRequest && t.myRequest.status === "pending" && run.status !== "pending_approval" && isActive(run)) {
     return (
-      <section className="card p-4 text-sm text-muted" aria-label="Your decision">
+      <section className="card p-4 text-sm text-muted" aria-label="Your decision" data-tour="decision">
         The Bots are still negotiating round {run.round}. You can decide once the deal is compiled.
       </section>
     );

@@ -1,7 +1,8 @@
-import { FlaskConical, Plus, Search as SearchIcon, X } from "lucide-react";
+import { FlaskConical, Plus, Search as SearchIcon, Sparkles, X } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useNeedsYou } from "../app/needsYou";
+import { useTour } from "../app/tour";
 import { useData } from "../data/DataProvider";
 import { useRuns } from "../data/hooks";
 import { useNewRequest } from "../features/request/NewRequest";
@@ -32,6 +33,7 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
   const runs = useRuns();
   const { open } = useNewRequest();
   const { pending } = useNeedsYou();
+  const tour = useTour();
   const [mobileSearch, setMobileSearch] = useState(false);
   const backend = source.kind === "mock" ? "mock" : (runs.data?.[0]?.backend ?? null);
 
@@ -45,6 +47,11 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
               <strong className="font-semibold">Sample data, not a real Bot run.</strong>
               <span className="max-sm:hidden"> Every community, Bot post and deal here is invented so you can try the flow.</span>
             </span>
+            {tour.available && !tour.active ? (
+              <button type="button" className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:no-underline" onClick={() => tour.start()}>
+                Take the guided demo →
+              </button>
+            ) : null}
           </p>
         </div>
       ) : null}
@@ -72,6 +79,11 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
               <NavLink to="/how-it-works" className={navClass}>
                 How it works
               </NavLink>
+              {tour.available ? (
+                <button type="button" className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-accent-soft" onClick={() => tour.start()}>
+                  <Sparkles size={14} aria-hidden /> Guided demo
+                </button>
+              ) : null}
             </nav>
             <GlobalSearch ref={searchRef} className="ml-auto w-56 max-md:hidden lg:w-64" />
             <div className="flex items-center gap-1 max-md:ml-auto">

@@ -554,6 +554,54 @@ html.present .present-hide {
   display: none !important;
 }
 
+/* Skip link: hidden until keyboard focus reaches it. */
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -64px;
+  z-index: 60;
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px 12px;
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+}
+.skip:focus {
+  top: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Guided demo (app/tour.tsx): the element the current step talks about.
+   --------------------------------------------------------------------------- */
+
+[data-tour-spot] {
+  outline: 3px solid var(--accent);
+  outline-offset: 6px;
+  scroll-margin-top: 112px;
+  animation: tour-pulse 1.8s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  50% {
+    outline-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+/* Room to scroll the last section above the step card. */
+html.touring body {
+  padding-bottom: 300px;
+}
+.tour-timer {
+  transform-origin: left;
+  animation: tour-timer linear forwards;
+}
+@keyframes tour-timer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

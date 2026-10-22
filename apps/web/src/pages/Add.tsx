@@ -83,6 +83,7 @@ function LinkForm({
   const gate = useGate("submit_job");
   return (
     <form
+      data-tour="add"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();

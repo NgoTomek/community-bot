@@ -130,7 +130,7 @@ function EventView({ info, round, runId, run, refreshError }: { info: EventInfo;
       </header>
 
       <div className="mt-8 grid gap-10 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-14">
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:self-start print:static" aria-label="RSVP and sharing">
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:self-start print:static" aria-label="RSVP and sharing" data-tour="rsvp">
           <RsvpCard key={dealId} dealId={dealId} deal={deal} phase={phase} count={info.rsvpCount} latestDealId={run?.dealId ?? null} />
           <ShareCard url={url} title={deal.title} text={`${deal.title}. ${shortDate(deal.date)} at ${deal.time}, ${deal.venue}.`} present={present} />
           {refreshError ? (

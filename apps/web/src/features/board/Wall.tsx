@@ -23,7 +23,7 @@ export function Wall({ communities }: { communities: Community[] }) {
   const names = useMemo(() => Object.fromEntries(communities.map((c) => [c.id, c.name])), [communities]);
 
   return (
-    <section aria-labelledby="wall-title" className="mt-16">
+    <section aria-labelledby="wall-title" className="mt-16" data-tour="wall">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 id="wall-title" className="font-display text-3xl">

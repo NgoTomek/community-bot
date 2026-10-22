@@ -456,7 +456,7 @@ export function HowItWorks() {
   usePageTitle("How it works");
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 sm:py-12">
-      <header className="max-w-3xl">
+      <header className="max-w-3xl" data-tour="how">
         <p className="eyebrow">Community Bots</p>
         <h1 className="mt-3 font-display text-3xl leading-tight sm:text-5xl sm:leading-[1.08]">How it works</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted">

@@ -173,7 +173,7 @@ export function ReplayView({ bundle, demo }: { bundle: ReplayBundle; demo: boole
   const style = { "--replay-top": `${headerHeight}px` } as CSSProperties;
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12" style={style}>
+    <div className="mx-auto flex max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12" style={style} data-tour="replay">
       <ReplayHeader data={data} demo={demo} />
 
       {hasPosts ? (

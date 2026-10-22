@@ -1,10 +1,11 @@
 import { LayoutGroup } from "framer-motion";
-import { ArrowRight, Link2, Plus } from "lucide-react";
+import { ArrowRight, Link2, Play, Plus, Sparkles } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useIdentity } from "../app/identity";
 import { useNeedsYou } from "../app/needsYou";
 import { usePageTitle } from "../app/title";
+import { useTour } from "../app/tour";
 import { ErrorState, Skeleton, SkeletonCard } from "../components/ui/States";
 import { useData } from "../data/DataProvider";
 import { useCommunities, useLastPosts, useRuns } from "../data/hooks";
@@ -46,7 +47,7 @@ export default function Board() {
       {firstTime ? (
         <PasteHero />
       ) : (
-        <section className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-10 sm:pt-14">
+        <section className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-10 sm:pt-14" data-tour="hero">
           <div>
             <p className="eyebrow">You are {active?.name ?? "an organiser"}</p>
             <h1 className="mt-2 font-display text-4xl sm:text-5xl">Collabs</h1>
@@ -65,7 +66,7 @@ export default function Board() {
       {needsError && !pending.length ? <p className="mb-6 text-sm text-muted">Could not load your requests: {needsError}</p> : null}
       <NeedsYouStrip requests={pending} />
 
-      <section aria-labelledby="lanes-title">
+      <section aria-labelledby="lanes-title" data-tour="collabs">
         <div className="mb-4 flex items-baseline justify-between gap-4">
           <h2 id="lanes-title" className="font-display text-3xl">
             Collabs
@@ -119,6 +120,7 @@ export default function Board() {
 /** The fastest way in: paste a public link to your community. */
 function PasteHero({ big = false }: { big?: boolean }) {
   const navigate = useNavigate();
+  const tour = useTour();
   const [url, setUrl] = useState("");
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -127,12 +129,22 @@ function PasteHero({ big = false }: { big?: boolean }) {
     navigate(`/add?url=${encodeURIComponent(/^https?:\/\//i.test(value) ? value : `https://${value}`)}`);
   };
   return (
-    <section className={big ? "py-20 sm:py-28" : "pb-12 pt-10 sm:pb-16 sm:pt-16"}>
+    <section className={big ? "py-20 sm:py-28" : "pb-12 pt-10 sm:pb-16 sm:pt-16"} data-tour="hero">
       <p className="eyebrow">Open source · Humans decide</p>
       <h1 className="mt-3 max-w-3xl font-display text-4xl leading-[1.08] sm:text-[56px]">Your community's Bot finds partners and drafts the event. You approve it.</h1>
       <p className="mt-5 max-w-2xl text-lg text-muted">
         Paste a public link to your community. Its Bot drafts a card, finds communities that fit, and negotiates with their Bots in the open. Nothing is agreed until every organiser says yes.
       </p>
+      {tour.available ? (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <button type="button" className="btn btn-lg" onClick={() => tour.start()}>
+            <Sparkles size={16} className="text-accent" aria-hidden /> Take the two-minute guided demo
+          </button>
+          <button type="button" className="btn btn-ghost btn-lg" onClick={() => tour.start(true)}>
+            <Play size={16} aria-hidden /> Watch it play by itself
+          </button>
+        </div>
+      ) : null}
       <form onSubmit={submit} className="mt-8 flex max-w-2xl flex-col gap-2 sm:flex-row">
         <label htmlFor="paste-link" className="sr-only">
           Paste your community link
