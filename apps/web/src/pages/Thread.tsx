@@ -54,7 +54,7 @@ export default function Thread() {
           title="This collab does not exist"
           body="The link may be old, or the run was removed."
           action={
-            <Link to="/" className="btn btn-primary">
+            <Link to="/board" className="btn btn-primary">
               Go to the board
             </Link>
           }
@@ -130,7 +130,7 @@ function ThreadView({ t, run }: { t: ThreadData; run: Run }) {
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
       <header className="pb-6 pt-6 sm:pt-8">
-        <Link to="/" className="present-hide inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
+        <Link to="/board" className="present-hide inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
           <ArrowLeft size={14} aria-hidden /> Board
         </Link>
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">

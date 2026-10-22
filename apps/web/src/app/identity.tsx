@@ -128,7 +128,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       addKnown,
       switchTo: (inbox) => setState((s) => setActiveIdentity(s, inbox)),
       forget: (inbox) => setState((s) => removeIdentity(s, inbox)),
-      linkFor: (identity) => organiserLink(appUrl("/"), identity.inbox, identity.communityId),
+      linkFor: (identity) => organiserLink(appUrl("/board"), identity.inbox, identity.communityId),
     }),
     [state, communityIds, addFromLink, addKnown],
   );

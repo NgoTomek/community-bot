@@ -10,7 +10,7 @@ import type { Community } from "../../data/types";
 import { buildWallPosts, filterWall, needFromPost, WALL_FILTERS, type WallFilter } from "../../lib/wall";
 import { useNewRequest } from "../request/NewRequest";
 
-const PAGE = 12;
+const PAGE = 6;
 
 /** Offers and needs from every card, posted by each community's Bot. */
 export function Wall({ communities }: { communities: Community[] }) {

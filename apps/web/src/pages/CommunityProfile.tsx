@@ -251,7 +251,7 @@ function Profile({ id }: { id: string }) {
         <h1 className="mt-2 font-display text-3xl sm:text-4xl">No community at this link</h1>
         <p className="mt-3 text-muted">The link may be old, or the community was removed.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/" className="btn btn-primary">
+          <Link to="/board" className="btn btn-primary">
             Go to the board
           </Link>
           <Link to="/add" className="btn">

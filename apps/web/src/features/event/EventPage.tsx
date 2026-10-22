@@ -39,7 +39,7 @@ export default function EventPage() {
             title="We can't find this event"
             body="The link may be incomplete, or the collab was removed."
             action={
-              <Link to="/" className="btn btn-primary">
+              <Link to="/board" className="btn btn-primary">
                 Go to the board
               </Link>
             }
@@ -86,7 +86,7 @@ function EventView({ info, round, runId, run, refreshError }: { info: EventInfo;
     <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 sm:py-12">
       <header>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link to="/" className="present-hide inline-flex items-center gap-1 text-sm text-muted hover:text-ink print:hidden">
+          <Link to="/board" className="present-hide inline-flex items-center gap-1 text-sm text-muted hover:text-ink print:hidden">
             <ArrowLeft size={14} aria-hidden /> Board
           </Link>
         </div>

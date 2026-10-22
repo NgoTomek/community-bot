@@ -6,10 +6,8 @@ import { useRuns } from "../data/hooks";
 import type { RequestSummary, Run } from "../data/types";
 import { useNeedsYou } from "./needsYou";
 
-/** sessionStorage: the step the guided demo is on, so a refresh keeps it. */
+/** sessionStorage: the step the guided tour is on, so a refresh keeps it. */
 const STEP_KEY = "cb.tour";
-/** localStorage: the visitor started or dismissed the demo, so the first-visit offer stays away. */
-const SEEN_KEY = "cb.tour.seen";
 
 interface StepData {
   runs: Run[];
@@ -44,20 +42,35 @@ function eventPath({ runs }: StepData): string | null {
   return dealId ? `/event/${dealId}` : null;
 }
 
+function replayPath({ runs }: StepData): string {
+  const run = runs.find((r) => r.status === "confirmed") ?? runs[0];
+  return run ? `/replay/${run.id}` : "/demo";
+}
+
+const BOARD = "/board";
+
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: "Community Bots in two minutes",
-    body: "Organisers paste a link to their community. Its Bot drafts a card, finds partner communities and negotiates a joint event with their Bots, in the open. Nothing is agreed until every organiser says yes.",
-    hint: "Everything here is clickable, so try anything.",
-    route: () => "/",
-    spot: "hero",
+    title: "Welcome to the app",
+    body: "This is the board every organiser sees. Each community's Bot finds partners and negotiates joint events here, in the open, and nothing is agreed until every organiser says yes.",
+    hint: "New request starts a collab. Add a community drafts a card from a link.",
+    route: () => BOARD,
+    spot: "board-head",
+    seconds: 9,
+  },
+  {
+    title: "Every collab on one board",
+    body: "A collab moves from Negotiating, to Waiting on others while organisers decide, to Confirmed. Anything that needs you is pinned at the top.",
+    hint: "Open any collab to read the Bots' conversation.",
+    route: () => BOARD,
+    spot: "collabs",
     seconds: 9,
   },
   {
     title: "Every community has a card",
     body: "A Bot drafts each card from public pages: what the community offers and what it needs. Every line is quoted from the card, so matches rest on evidence, not guesses.",
     hint: "Filter by Space, Speakers or Audience, or press Start a collab from this.",
-    route: () => "/",
+    route: () => BOARD,
     spot: "wall",
     seconds: 9,
   },
@@ -67,14 +80,6 @@ export const TOUR_STEPS: TourStep[] = [
     hint: "Paste any public link to watch a card being drafted.",
     route: () => "/add",
     spot: "add",
-    seconds: 9,
-  },
-  {
-    title: "Every collab on one board",
-    body: "A collab moves from Negotiating, to Waiting on others while organisers decide, to Confirmed. Anything that needs you is pinned at the top.",
-    hint: "Press New request at the top right to start your own collab.",
-    route: () => "/",
-    spot: "collabs",
     seconds: 9,
   },
   {
@@ -105,7 +110,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "Replay any negotiation",
     body: "Every run is recorded. Replay it message by message to see what each Bot said and how the deal came together.",
     hint: "Press play, or step through it yourself.",
-    route: () => "/demo",
+    route: replayPath,
     spot: "replay",
     seconds: 10,
   },
@@ -122,7 +127,7 @@ export const TOUR_STEPS: TourStep[] = [
 const LAST = TOUR_STEPS.length - 1;
 
 interface TourValue {
-  /** The demo runs on sample data only. */
+  /** The tour is written for the in-browser data source only. */
   available: boolean;
   active: boolean;
   start: (autoplay?: boolean) => void;
@@ -130,22 +135,6 @@ interface TourValue {
 }
 
 const TourContext = createContext<TourValue | null>(null);
-
-function markSeen() {
-  try {
-    localStorage.setItem(SEEN_KEY, "1");
-  } catch {
-    /* ignore */
-  }
-}
-
-function seenBefore(): boolean {
-  try {
-    return localStorage.getItem(SEEN_KEY) === "1";
-  } catch {
-    return true;
-  }
-}
 
 function savedStep(): number | null {
   try {
@@ -157,13 +146,10 @@ function savedStep(): number | null {
   }
 }
 
-/** ?tour=1 starts the guided demo, ?tour=auto plays it by itself, ?tour=0 ends it. */
+/** ?tour=1 starts the guided tour, ?tour=auto plays it by itself, ?tour=0 ends it. */
 function initialTour(): { step: number | null; auto: boolean } {
   const param = new URLSearchParams(window.location.search).get("tour");
-  if (param === "1" || param === "auto") {
-    markSeen();
-    return { step: 0, auto: param === "auto" };
-  }
+  if (param === "1" || param === "auto") return { step: 0, auto: param === "auto" };
   if (param === "0") return { step: null, auto: false };
   return { step: savedStep(), auto: false };
 }
@@ -178,21 +164,24 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [initial] = useState(initialTour);
   const [step, setStep] = useState<number | null>(available ? initial.step : null);
   const [auto, setAuto] = useState(initial.auto);
-  const [offer, setOffer] = useState(() => available && initial.step === null && !seenBefore());
+  const routed = useRef<number | null>(null);
 
-  const start = useCallback((autoplay = false) => {
-    markSeen();
-    setOffer(false);
-    setAuto(autoplay);
-    setStep(0);
-  }, []);
+  const start = useCallback(
+    (autoplay = false) => {
+      setAuto(autoplay);
+      setStep(0);
+      routed.current = 0;
+      navigate(BOARD);
+    },
+    [navigate],
+  );
 
   const stop = useCallback(() => {
     setAuto(false);
     setStep(null);
   }, []);
 
-  // Drop ?tour= once read, so a reload or a shared link does not restart the demo.
+  // Drop ?tour= once read, so a reload or a shared link does not restart the tour.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (!params.has("tour")) return;
@@ -215,7 +204,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // (a live run finishing) never pull the visitor away from where they clicked to.
   const data = useMemo<StepData>(() => ({ runs: runs.data ?? [], pending }), [runs.data, pending]);
   const ready = runs.data !== undefined || !runs.loading;
-  const routed = useRef<number | null>(null);
   useEffect(() => {
     if (step === null) {
       routed.current = null;
@@ -284,19 +272,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
           onRestart={() => start()}
           onToggleAuto={() => (playing ? setAuto(false) : step < LAST ? setAuto(true) : start(true))}
           onExit={stop}
-        />
-      ) : offer && location.pathname === "/" ? (
-        <TourOffer
-          onStart={() => start()}
-          onWatch={() => {
-            markSeen();
-            setOffer(false);
-            navigate("/walkthrough");
-          }}
-          onDismiss={() => {
-            markSeen();
-            setOffer(false);
-          }}
         />
       ) : null}
     </TourContext.Provider>
@@ -390,33 +365,6 @@ function TourCard({
             </button>
           )}
         </div>
-      </div>
-    </aside>
-  );
-}
-
-function TourOffer({ onStart, onWatch, onDismiss }: { onStart: () => void; onWatch: () => void; onDismiss: () => void }) {
-  return (
-    <aside aria-label="Guided tour" className={`${cardClass("right")} flex flex-col gap-3 p-4 sm:p-5`}>
-      <div className="flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-          <Sparkles size={18} aria-hidden />
-        </span>
-        <div>
-          <p className="font-semibold">New here?</p>
-          <p className="text-sm text-muted">Watch the Bots negotiate an event, or take the two-minute tour of the site.</p>
-        </div>
-      </div>
-      <div className="flex justify-end gap-2">
-        <button type="button" className="btn btn-ghost" onClick={onDismiss}>
-          Not now
-        </button>
-        <button type="button" className="btn" onClick={onStart}>
-          Tour the site
-        </button>
-        <button type="button" className="btn btn-primary" onClick={onWatch}>
-          Watch the Bots
-        </button>
       </div>
     </aside>
   );

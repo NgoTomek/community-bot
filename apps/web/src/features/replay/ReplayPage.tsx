@@ -70,7 +70,7 @@ export function ReplayPage({ demo = false }: { demo?: boolean }) {
             body="It may have been removed, or the link is incomplete."
             action={
               <div className="flex flex-wrap justify-center gap-2">
-                <Link to="/" className="btn">
+                <Link to="/board" className="btn">
                   Back to the board
                 </Link>
                 <Link to="/demo" className="btn btn-primary">

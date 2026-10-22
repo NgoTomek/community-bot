@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import { usePageTitle } from "../../app/title";
 import { useTour } from "../../app/tour";
 import { Avatar } from "../../components/Avatar";
-import { SampleBadge } from "../../components/Badges";
 import { ErrorState, Skeleton, SkeletonCard } from "../../components/ui/States";
 import { useData } from "../../data/DataProvider";
 import { useLive } from "../../data/hooks";
@@ -16,7 +15,6 @@ import { DealDetails } from "../replay/DealSummary";
 import { loadDemoReplay } from "../replay/load";
 import type { ReplayBundle, ReplayData } from "../replay/model";
 import { useReplayKeys } from "../replay/useReplayPlayer";
-import { useNewRequest } from "../request/NewRequest";
 import { PostCard } from "../thread/Timeline";
 
 const DEMO_URL = `${import.meta.env.BASE_URL}demo-run.json`;
@@ -123,9 +121,8 @@ export default function WalkthroughPage() {
 }
 
 function Story({ bundle }: { bundle: ReplayBundle }) {
-  const { data, eventDealId, threadRunId } = bundle;
+  const { data, eventDealId } = bundle;
   const tour = useTour();
-  const { open } = useNewRequest();
   const beats = useMemo<Beat[]>(
     () => [
       { kind: "cast" },
@@ -215,14 +212,13 @@ function Story({ bundle }: { bundle: ReplayBundle }) {
     <div className="mx-auto max-w-[1240px] px-4 py-6 max-lg:pb-80 sm:px-6 lg:py-8">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
-          <p className="eyebrow">Walkthrough</p>
+          <p className="eyebrow">Demo walkthrough</p>
           <h1 className="mt-2 font-display text-3xl leading-tight sm:text-4xl">Watch three Bots plan one event</h1>
           <p className="mt-2 max-w-2xl text-muted">A recorded sample negotiation, one message at a time, with what each Bot did and why.</p>
         </div>
-        <SampleBadge />
       </header>
 
-      <div className="mt-6 grid gap-8 lg:h-[calc(100dvh-15.5rem)] lg:min-h-[520px] lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-8 lg:h-[calc(100dvh-18rem)] lg:min-h-[520px] lg:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="lg:overflow-y-auto" aria-label="Story">
           <ol className="mb-6 space-y-1 max-lg:hidden">
             {CHAPTERS.map((label, i) => (
@@ -348,22 +344,17 @@ function Story({ bundle }: { bundle: ReplayBundle }) {
               <p className="eyebrow">{confirmed ? "Confirmed" : "Draft"}</p>
               <h3 className="mt-2 font-display text-2xl leading-tight">{deal?.deal.title ?? "The event"}</h3>
               <div className="mt-4 flex flex-wrap gap-2">
+                <Link to="/board" className="btn btn-primary">
+                  Try the app yourself <ArrowRight size={16} aria-hidden />
+                </Link>
                 {eventDealId ? (
-                  <Link to={`/event/${eventDealId}`} className="btn btn-primary">
+                  <Link to={`/event/${eventDealId}`} className="btn">
                     <CalendarCheck size={16} aria-hidden /> Open the event page
                   </Link>
                 ) : null}
-                {threadRunId ? (
-                  <Link to={`/run/${threadRunId}`} className="btn">
-                    See the full thread
-                  </Link>
-                ) : null}
-                <button type="button" className="btn" onClick={() => open()}>
-                  Start your own collab
-                </button>
                 {tour.available ? (
                   <button type="button" className="btn btn-ghost" onClick={() => tour.start()}>
-                    <Sparkles size={16} className="text-accent" aria-hidden /> Tour the rest of the site
+                    <Sparkles size={16} className="text-accent" aria-hidden /> Guided tour of the app
                   </button>
                 ) : null}
               </div>

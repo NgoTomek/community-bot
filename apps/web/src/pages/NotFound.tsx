@@ -7,8 +7,8 @@ export default function NotFound() {
     <div className="page stack">
       <p className="kicker">404</p>
       <h1>This page is not on the board</h1>
-      <AppLink className="btn-signal" to="/">
-        Directory
+      <AppLink className="btn-signal" to="/board">
+        Back to the board
       </AppLink>
     </div>
   );

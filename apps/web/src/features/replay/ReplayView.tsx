@@ -218,7 +218,7 @@ export function ReplayView({ bundle, demo }: { bundle: ReplayBundle; demo: boole
                   Open the live thread
                 </Link>
               ) : (
-                <Link to="/" className="btn">
+                <Link to="/board" className="btn">
                   Back to the board
                 </Link>
               )

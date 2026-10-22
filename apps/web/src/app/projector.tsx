@@ -55,7 +55,7 @@ function FollowLiveRun() {
   const live = (runs.data ?? []).find((r) => r.control === "running" && (r.status === "negotiating" || r.status === "compiling"));
   useEffect(() => {
     if (!live) return;
-    const onBoard = location.pathname === "/";
+    const onBoard = location.pathname === "/board";
     const threadId = location.pathname.startsWith("/run/") ? location.pathname.slice(5) : null;
     const current = threadId ? (runs.data ?? []).find((r) => r.id === threadId) : null;
     const currentIsLive = current && (current.status === "negotiating" || current.status === "compiling" || current.status === "pending_approval");

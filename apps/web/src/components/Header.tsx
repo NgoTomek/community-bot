@@ -1,8 +1,7 @@
-import { Plus, Search as SearchIcon, Sparkles, X } from "lucide-react";
+import { ArrowRight, PlayCircle, Plus, Search as SearchIcon, X } from "lucide-react";
 import { forwardRef, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useNeedsYou } from "../app/needsYou";
-import { useTour } from "../app/tour";
 import { useData } from "../data/DataProvider";
 import { useRuns } from "../data/hooks";
 import { useNewRequest } from "../features/request/NewRequest";
@@ -28,14 +27,20 @@ export function Logo() {
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `whitespace-nowrap rounded-md px-2 py-1 text-sm ${isActive ? "font-medium text-ink" : "text-muted hover:text-ink"}`;
 
+/** Pages that play the bundled recording rather than the app itself. */
+function isDemoPath(pathname: string): boolean {
+  return pathname === "/walkthrough" || pathname === "/demo";
+}
+
 export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef) {
   const source = useData();
   const runs = useRuns();
   const { open } = useNewRequest();
   const { pending } = useNeedsYou();
-  const tour = useTour();
+  const { pathname } = useLocation();
   const [mobileSearch, setMobileSearch] = useState(false);
   const backend = source.kind === "mock" ? "mock" : (runs.data?.[0]?.backend ?? null);
+  const landing = pathname === "/";
 
   return (
     <header className="site-header sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-md supports-[backdrop-filter]:bg-bg/75">
@@ -49,48 +54,62 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
           </>
         ) : (
           <>
-            <Link to="/" className="shrink-0 rounded-md" aria-label="Community Bots, board">
+            <Link to="/" className="shrink-0 rounded-md" aria-label="Community Bots, home">
               <Logo />
             </Link>
             <nav className="ml-2 flex items-center gap-1 max-md:hidden" aria-label="Main">
-              <NavLink to="/" end className={navClass}>
+              <NavLink to="/board" className={navClass}>
                 Board
                 {pending.length ? <span className="ml-1.5 rounded-full bg-accent-bg px-1.5 py-0.5 text-[11px] font-semibold text-accent-fg">{pending.length}</span> : null}
               </NavLink>
               <NavLink to="/walkthrough" className={navClass}>
-                Walkthrough
-              </NavLink>
-              <NavLink to="/demo" className={navClass}>
-                Replay
+                Demo
               </NavLink>
               <NavLink to="/how-it-works" className={navClass}>
                 How it works
               </NavLink>
-              {tour.available ? (
-                <button type="button" className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-accent-soft" onClick={() => tour.start()}>
-                  <Sparkles size={14} aria-hidden /> Guided tour
-                </button>
-              ) : null}
             </nav>
-            <GlobalSearch ref={searchRef} className="ml-auto w-56 max-md:hidden lg:w-64" />
-            <div className="flex items-center gap-1 max-md:ml-auto">
-              <button type="button" className="btn btn-ghost btn-icon md:hidden" onClick={() => setMobileSearch(true)} aria-label="Search">
-                <SearchIcon size={18} aria-hidden />
-              </button>
-              {source.kind !== "mock" ? (
-                <span className="max-sm:hidden">
-                  <BackendBadge backend={backend} title="Backend of the latest run" />
-                </span>
-              ) : null}
-              <IdentityMenu />
-              <button type="button" className="btn btn-primary h-9 min-h-9 px-3" onClick={() => open()} aria-keyshortcuts="n">
-                <Plus size={16} aria-hidden />
-                <span className="max-sm:sr-only">New request</span>
-              </button>
-            </div>
+            {landing ? (
+              <Link to="/board" className="btn btn-primary ml-auto h-9 min-h-9 px-3">
+                Open the app <ArrowRight size={16} aria-hidden />
+              </Link>
+            ) : (
+              <>
+                <GlobalSearch ref={searchRef} className="ml-auto w-56 max-md:hidden lg:w-64" />
+                <div className="flex items-center gap-1 max-md:ml-auto">
+                  <button type="button" className="btn btn-ghost btn-icon md:hidden" onClick={() => setMobileSearch(true)} aria-label="Search">
+                    <SearchIcon size={18} aria-hidden />
+                  </button>
+                  {source.kind !== "mock" ? (
+                    <span className="max-sm:hidden">
+                      <BackendBadge backend={backend} title="Backend of the latest run" />
+                    </span>
+                  ) : null}
+                  <IdentityMenu />
+                  <button type="button" className="btn btn-primary h-9 min-h-9 px-3" onClick={() => open()} aria-keyshortcuts="n">
+                    <Plus size={16} aria-hidden />
+                    <span className="max-sm:sr-only">New request</span>
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
+      {isDemoPath(pathname) ? (
+        <div className="border-t border-accent/15 bg-accent-soft">
+          <p className="mx-auto flex max-w-[1240px] items-center gap-2 px-4 py-2 text-[13px] text-accent sm:px-6">
+            <PlayCircle size={14} className="shrink-0" aria-hidden />
+            <span>
+              <strong className="font-semibold">Demo</strong>
+              <span className="max-sm:hidden"> · a recorded negotiation with sample data</span>
+            </span>
+            <Link to="/board" className="ml-auto shrink-0 font-semibold hover:underline">
+              Try the app →
+            </Link>
+          </p>
+        </div>
+      ) : null}
     </header>
   );
 });

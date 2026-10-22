@@ -1,5 +1,5 @@
 import { LayoutGroup } from "framer-motion";
-import { ArrowRight, Link2, MessagesSquare, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Link2, MessagesSquare, Sparkles } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useIdentity } from "../app/identity";
@@ -12,14 +12,12 @@ import { useCommunities, useLastPosts, useRuns } from "../data/hooks";
 import { NeedsYouStrip } from "../features/board/NeedsYouStrip";
 import { RunCard } from "../features/board/RunCard";
 import { Wall } from "../features/board/Wall";
-import { useNewRequest } from "../features/request/NewRequest";
 import { groupByLane, LANES, needsYouRunIds } from "../lib/lanes";
 
 export default function Board() {
-  usePageTitle(null);
+  usePageTitle("Board");
   const source = useData();
   const { active } = useIdentity();
-  const { open } = useNewRequest();
   const { pending, error: needsError } = useNeedsYou();
   const communities = useCommunities();
   const runs = useRuns();
@@ -30,8 +28,6 @@ export default function Board() {
   const lanes = useMemo(() => groupByLane(runs.data ?? []), [runs.data]);
   const needsYou = useMemo(() => needsYouRunIds(pending), [pending]);
 
-  const isSampleViewer = !!active && source.sampleIdentity()?.inbox === active.inbox;
-  const firstTime = !active || isSampleViewer;
   const empty = communities.data !== undefined && communities.data.length === 0;
 
   if (empty && !runs.data?.length) {
@@ -44,24 +40,15 @@ export default function Board() {
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
-      {firstTime ? (
-        <PasteHero />
-      ) : (
-        <section className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-10 sm:pt-14" data-tour="hero">
-          <div>
-            <p className="eyebrow">You are {active?.name ?? "an organiser"}</p>
-            <h1 className="mt-2 font-display text-4xl sm:text-5xl">Collabs</h1>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/add" className="btn">
-              <Link2 size={16} aria-hidden /> Add a community
-            </Link>
-            <button type="button" className="btn btn-primary" onClick={() => open()}>
-              <Plus size={16} aria-hidden /> New request
-            </button>
-          </div>
-        </section>
-      )}
+      <section className="flex flex-wrap items-end justify-between gap-4 pb-8 pt-10 sm:pt-12" data-tour="board-head">
+        <div>
+          <p className="eyebrow">You are {active?.name ?? "an organiser"}</p>
+          <h1 className="mt-2 font-display text-4xl sm:text-5xl">Board</h1>
+        </div>
+        <Link to="/add" className="btn">
+          <Link2 size={16} aria-hidden /> Add a community
+        </Link>
+      </section>
 
       {needsError && !pending.length ? <p className="mb-6 text-sm text-muted">Could not load your requests: {needsError}</p> : null}
       <NeedsYouStrip requests={pending} />

@@ -15,6 +15,7 @@ import Add from "./pages/Add";
 import Board from "./pages/Board";
 import CommunityProfile from "./pages/CommunityProfile";
 import HowItWorks from "./pages/HowItWorks";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import ReplayPage from "./pages/Replay";
 import RequestLink from "./pages/RequestLink";
@@ -40,7 +41,8 @@ export default function App() {
                         <Header />
                         <main id="content" tabIndex={-1}>
                           <Routes>
-                            <Route path="/" element={<Board />} />
+                            <Route path="/" element={<Landing />} />
+                            <Route path="/board" element={<Board />} />
                             <Route path="/how-it-works" element={<HowItWorks />} />
                             <Route path="/walkthrough" element={<WalkthroughPage />} />
                             <Route path="/run/:runId" element={<Thread />} />

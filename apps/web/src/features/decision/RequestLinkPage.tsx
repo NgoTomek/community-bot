@@ -35,7 +35,7 @@ export default function RequestLinkPage() {
             title="This approval link is not valid"
             body="Check that you opened the whole link. If it still fails, ask the organiser who sent it for a fresh one."
             action={
-              <Link to="/" className="btn btn-primary">
+              <Link to="/board" className="btn btn-primary">
                 Go to the board
               </Link>
             }
