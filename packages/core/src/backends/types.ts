@@ -38,3 +38,12 @@ export class BackendError extends Error {
     this.name = "BackendError";
   }
 }
+
+/** One Bot turn, in milliseconds. Defaults to 120000. */
+export function turnTimeoutMs(env: BackendEnv = {}): number {
+  const raw = env.TURN_TIMEOUT_MS;
+  if (raw == null || (typeof raw === "string" && raw.trim() === "")) return 120_000;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 120_000;
+  return Math.floor(n);
+}
