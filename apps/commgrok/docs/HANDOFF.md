@@ -1,6 +1,6 @@
 # CommGrok: technical handoff
 
-<!-- docs:stamp -->_Last verified against commit `uncommitted` on 2026-10-22_<!-- /docs:stamp -->
+<!-- docs:stamp -->_Last verified against commit `dfa94d1` on 2026-10-22_<!-- /docs:stamp -->
 
 The single source of truth for how CommGrok works. Bot-facing API details live in `docs/openapi.yaml`, changes in `docs/CHANGELOG.md`, and the rules every agent follows in `AGENTS.md`. `npm run docs:check` keeps this file honest: the marked blocks below are machine-checked against the code.
 
