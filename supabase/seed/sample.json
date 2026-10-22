@@ -1,0 +1,104 @@
+{
+  "note": "Fixed mock sample loaded by npm run seed:sample (docs/SAMPLE.md). Made-up communities. The deal date is computed when the seed runs.",
+  "communities": [
+    {
+      "inboxToken": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "card": {
+        "id": "sample-atlas",
+        "name": "Atlas Lab",
+        "tagline": "Builders who ship on weeknights",
+        "location": "London",
+        "members": "About 40 people who prototype together",
+        "runs": [{ "event": "Weeknight build", "frequency": "weekly" }],
+        "offers": ["A room for 40", "Facilitation"],
+        "needs": ["A co-host", "Speakers"],
+        "constraints": { "days": ["Tue", "Wed", "Thu"], "maxGroupSize": 40, "notes": "Evenings only" },
+        "tone": "direct and warm",
+        "sourceUrls": ["https://example.com/atlas-lab"]
+      }
+    },
+    {
+      "inboxToken": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "card": {
+        "id": "sample-harbor",
+        "name": "Harbor House",
+        "tagline": "A harbour for small communities",
+        "location": "London",
+        "members": "Organisers who share venues",
+        "runs": [{ "event": "Community supper", "frequency": "monthly" }],
+        "offers": ["A co-host and a mailing list"],
+        "needs": ["A programme"],
+        "constraints": { "days": ["Tue", "Thu", "Fri"], "maxGroupSize": 80, "notes": null },
+        "tone": "friendly and practical",
+        "sourceUrls": ["https://example.com/harbor-house"]
+      }
+    },
+    {
+      "inboxToken": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "card": {
+        "id": "sample-signal",
+        "name": "Signal Club",
+        "tagline": "People who teach tools by using them",
+        "location": "London",
+        "members": null,
+        "runs": [{ "event": "Tool night", "frequency": "monthly" }],
+        "offers": ["Speakers on AI agents"],
+        "needs": ["A room"],
+        "constraints": { "days": ["Thu", "Fri"], "maxGroupSize": null, "notes": null },
+        "tone": "curious and concise",
+        "sourceUrls": ["https://example.com/signal-club"]
+      }
+    }
+  ],
+  "run": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "leadId": "sample-atlas",
+    "partnerIds": ["sample-harbor", "sample-signal"],
+    "need": "AI agents workshop, 40 people, next month, need a space and a co-host"
+  },
+  "deal": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "terms": {
+      "title": "AI agents workshop",
+      "time": "18:30",
+      "venue": "London",
+      "capacity": 40,
+      "description": "A Thursday workshop for 40 people. Atlas Lab hosts the room, Harbor House co-hosts, Signal Club brings speakers.",
+      "communities": [
+        { "id": "sample-atlas", "name": "Atlas Lab", "role": "host", "brings": ["A room for 40"] },
+        { "id": "sample-harbor", "name": "Harbor House", "role": "co-host", "brings": ["A co-host and a mailing list"] },
+        { "id": "sample-signal", "name": "Signal Club", "role": "speaker", "brings": ["Speakers on AI agents"] }
+      ],
+      "agenda": [
+        { "time": "18:30", "item": "Doors and intros" },
+        { "time": "19:00", "item": "AI agents workshop" }
+      ],
+      "reasons": [
+        { "communityId": "sample-atlas", "evidence": "A room for 40" },
+        { "communityId": "sample-harbor", "evidence": "A co-host and a mailing list" },
+        { "communityId": "sample-signal", "evidence": "Speakers on AI agents" }
+      ],
+      "consensus": true,
+      "status": "pending_approval"
+    }
+  },
+  "approvalTokens": {
+    "sample-atlas": "a1111111-1111-4111-8111-111111111111",
+    "sample-harbor": "b2222222-2222-4222-8222-222222222222",
+    "sample-signal": "c3333333-3333-4333-8333-333333333333"
+  },
+  "messages": [
+    { "speaker": "Atlas Lab organiser", "communityId": "sample-atlas", "role": "human", "text": "AI agents workshop, 40 people, next month, need a space and a co-host", "stance": null, "quote": null },
+    { "speaker": "Atlas Lab Bot", "communityId": "sample-atlas", "role": "bot", "text": "We can host this. We have a room for 40, evenings only, Tuesday to Thursday.", "stance": "offer", "quote": "A room for 40" },
+    { "speaker": "Harbor House Bot", "communityId": "sample-harbor", "role": "bot", "text": "We can co-host and we bring a co-host and a mailing list. Thursday works.", "stance": "offer", "quote": "A co-host and a mailing list" },
+    { "speaker": "Signal Club Bot", "communityId": "sample-signal", "role": "bot", "text": "We can bring speakers on AI agents. Thursday or Friday.", "stance": "offer", "quote": "Speakers on AI agents" },
+    { "speaker": "Atlas Lab Bot", "communityId": "sample-atlas", "role": "bot", "text": "Proposal: Thursday evening in London, 40 people. We host the room, Harbor House co-hosts, Signal Club brings the speakers.", "stance": "offer", "quote": "Evenings only" },
+    { "speaker": "Harbor House Bot", "communityId": "sample-harbor", "role": "bot", "text": "Accepted. We will co-host and send the mailing list.", "stance": "accept", "quote": "A co-host and a mailing list" },
+    { "speaker": "Signal Club Bot", "communityId": "sample-signal", "role": "bot", "text": "Accepted. We will bring speakers on AI agents.", "stance": "accept", "quote": "Speakers on AI agents" }
+  ],
+  "announcements": {
+    "sample-atlas": "Atlas Lab is hosting a Thursday AI agents workshop in London. Forty people, we bring the room. Come build with Harbor House and Signal Club.",
+    "sample-harbor": "Harbor House is co-hosting the AI agents workshop. We will bring a co-host and a mailing list. Thursday evening in London.",
+    "sample-signal": "Signal Club is bringing speakers on AI agents to a Thursday workshop in London, with Atlas Lab and Harbor House."
+  }
+}
