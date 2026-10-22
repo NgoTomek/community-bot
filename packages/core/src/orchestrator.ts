@@ -1,15 +1,21 @@
+import { ZodError } from "zod";
 import { askJson } from "./ask";
 import type { Backend, FetchedPage } from "./backends/types";
-import { communityBotName, botSpeakerName, organiserSpeakerName, SCRIBE_BOT } from "./bots";
+import { botSpeakerName, communityBotName, MATCHMAKER_BOT, organiserSpeakerName, SCOUT_BOT, SCRIBE_BOT } from "./bots";
+import { normaliseCard, slugify } from "./card";
 import { OrganiserChannel, organiserGuidanceBlock, type HumanPost, type RunControlSource } from "./control";
 import { validateDeal } from "./deal";
-import { checkEvidence } from "./evidence";
+import { checkEvidence, verifyEvidence } from "./evidence";
 import { messageDelayMs } from "./pacing";
 import {
   announcePrompt,
   communityStandingRules,
-  scribePrompt,
+  MATCHMAKER_STANDING_RULES,
+  matchmakerPrompt,
+  SCOUT_STANDING_RULES,
   SCRIBE_STANDING_RULES,
+  scoutPrompt,
+  scribePrompt,
   turnPrompt,
   type PromptParticipant,
   type TurnStep,
@@ -19,6 +25,7 @@ import {
   BotReplySchema,
   formatZodError,
   LIMITS,
+  MatchResultSchema,
   type BotReply,
   type Card,
   type ChatMessage,
@@ -50,8 +57,32 @@ export interface DraftCardInput {
 }
 
 /** Asks the Scout Bot for a card and returns it normalised and validated (status is decided by the caller). */
-export async function draftCard(_input: DraftCardInput): Promise<Card> {
-  throw new Error("draftCard: not implemented yet");
+export async function draftCard(input: DraftCardInput): Promise<Card> {
+  await input.onProgress?.("drafting card");
+  const id = input.nameHint ? slugify(input.nameHint) : undefined;
+  return askJson({
+    backend: input.backend,
+    bot: SCOUT_BOT,
+    standingRules: SCOUT_STANDING_RULES,
+    prompt: scoutPrompt({
+      url: input.url,
+      nameHint: input.nameHint,
+      pages: input.pages,
+      now: input.now,
+    }),
+    schema: (value) => {
+      try {
+        return normaliseCard(value, {
+          id,
+          fallbackName: input.nameHint,
+          sourceUrls: [input.url],
+        });
+      } catch (error) {
+        if (error instanceof ZodError) throw new Error(formatZodError(error), { cause: error });
+        throw error;
+      }
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -70,8 +101,34 @@ export interface MatchInput {
  * Top 3 candidates. Reasons whose evidence is not verbatim on the named card are dropped,
  * and candidates left with no verified reason are dropped.
  */
-export async function matchCommunities(_input: MatchInput): Promise<MatchCandidate[]> {
-  throw new Error("matchCommunities: not implemented yet");
+export async function matchCommunities(input: MatchInput): Promise<MatchCandidate[]> {
+  const byId = new Map<string, Card>([
+    [input.lead.card.id, input.lead.card],
+    ...input.candidates.map((candidate) => [candidate.card.id, candidate.card] as const),
+  ]);
+  const ranked = await askJson({
+    backend: input.backend,
+    bot: MATCHMAKER_BOT,
+    standingRules: MATCHMAKER_STANDING_RULES,
+    prompt: matchmakerPrompt({
+      need: input.need,
+      lead: input.lead.card,
+      candidates: input.candidates.map((candidate) => candidate.card),
+      now: input.now,
+    }),
+    schema: MatchResultSchema,
+  });
+  const kept: MatchCandidate[] = [];
+  for (const candidate of ranked) {
+    const reasons = candidate.reasons.filter((reason) => {
+      const card = byId.get(reason.cardOwnerId);
+      return Boolean(card && verifyEvidence(reason.evidence, card));
+    });
+    if (reasons.length === 0) continue;
+    kept.push({ ...candidate, reasons });
+    if (kept.length === 3) break;
+  }
+  return kept;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +190,9 @@ function botReply(value: unknown): BotReply {
  */
 export async function runNegotiation(input: NegotiationInput): Promise<NegotiationOutcome> {
   const { backend, lead, partners, need, now } = input;
+  if (partners.length < 1 || partners.length > LIMITS.maxPartners) {
+    throw new Error(`A negotiation needs 1 to ${LIMITS.maxPartners} partners.`);
+  }
   const everyone = [lead, ...partners];
   const byId = new Map(everyone.map((p) => [p.card.id, p]));
   const participants: PromptParticipant[] = everyone.map(({ card, status }) => ({
@@ -262,7 +322,12 @@ export async function runNegotiation(input: NegotiationInput): Promise<Negotiati
       backend,
       bot: communityBotName(community.id),
       standingRules: communityStandingRules(participant.card, participant.status),
-      prompt: announcePrompt({ communityName: participant.card.name, communityId: community.id, deal }),
+      prompt: announcePrompt({
+        communityName: participant.card.name,
+        communityId: community.id,
+        deal,
+        tone: participant.card.tone,
+      }),
       schema: AnnouncementReplySchema,
     });
     announcements.push({ communityId: community.id, text });

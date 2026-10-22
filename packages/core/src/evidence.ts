@@ -96,22 +96,28 @@ export function getCardField(card: Card, path: string): string | null {
  */
 export function highlightQuote(text: string, quote: string): { text: string; highlight: boolean }[] {
   const needle = normaliseQuote(quote);
-  if (!needle) return [{ text, highlight: false }];
-  // Map each normalised character back to its index in the original text.
+  if (needle.length < MIN_QUOTE_LENGTH) return [{ text, highlight: false }];
+  // Map each normalised character back to the start index of its original code point.
+  // Walk by code point so multi-byte chars (and expansions like … → "...") stay aligned.
   const map: number[] = [];
   let normalised = "";
-  for (let i = 0; i < text.length; i++) {
-    const piece = normaliseText(text[i]) || (/\s/.test(text[i]) ? " " : "");
+  let i = 0;
+  while (i < text.length) {
+    const char = String.fromCodePoint(text.codePointAt(i)!);
+    const piece = normaliseText(char) || (/\s/.test(char) ? " " : "");
     for (const ch of piece) {
       if (ch === " " && normalised.endsWith(" ")) continue;
       normalised += ch;
       map.push(i);
     }
+    i += char.length;
   }
   const start = normalised.indexOf(needle);
   if (start < 0) return [{ text, highlight: false }];
   const from = map[start];
-  const to = map[start + needle.length - 1] + 1;
+  const lastStart = map[start + needle.length - 1];
+  const lastChar = String.fromCodePoint(text.codePointAt(lastStart)!);
+  const to = lastStart + lastChar.length;
   return [
     { text: text.slice(0, from), highlight: false },
     { text: text.slice(from, to), highlight: true },

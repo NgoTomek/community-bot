@@ -150,9 +150,13 @@ export const LIMITS = {
   need: 600,
   name: 80,
   maxPartners: 3,
-  note: 500,
-  rsvpName: 80,
+  note: 2000,
+  rsvpName: 60,
   maxBotMessages: 12,
+  maxRounds: 3,
+  maxRsvps: 200,
+  paramsBytes: 20000,
+  maxQueuedJobs: 30,
 } as const;
 
 const httpUrl = z
@@ -160,7 +164,7 @@ const httpUrl = z
   .max(LIMITS.url)
   .refine((u) => /^https?:\/\/[^\s]+$/i.test(u), "must be an http(s) URL");
 
-export const JOB_TYPES = ["draft_card", "confirm_card", "match", "negotiate"] as const;
+export const JOB_TYPES = ["draft_card", "match", "negotiate", "renegotiate", "publish_luma"] as const;
 export type JobType = (typeof JOB_TYPES)[number];
 
 export const DraftCardParamsSchema = z.object({
@@ -168,7 +172,6 @@ export const DraftCardParamsSchema = z.object({
   /** Optional display name hint, e.g. from seed/communities.json. Also fixes the community id. */
   name: z.string().min(1).max(LIMITS.name).optional(),
 });
-export const ConfirmCardParamsSchema = z.object({ card: CardSchema });
 export const MatchParamsSchema = z.object({
   leadId: CommunityIdSchema,
   need: z.string().trim().min(5).max(LIMITS.need),
@@ -182,26 +185,30 @@ export const NegotiateParamsSchema = z.object({
   /** The match job the partners were picked from; its verified reasons are copied to the run. */
   matchJobId: z.string().uuid().optional(),
 });
+export const RenegotiateParamsSchema = z.object({
+  runId: z.string().uuid(),
+});
+export const PublishLumaParamsSchema = z.object({
+  dealId: z.string().uuid(),
+});
 export type DraftCardParams = z.infer<typeof DraftCardParamsSchema>;
-export type ConfirmCardParams = z.infer<typeof ConfirmCardParamsSchema>;
 export type MatchParams = z.infer<typeof MatchParamsSchema>;
 export type NegotiateParams = z.infer<typeof NegotiateParamsSchema>;
+export type RenegotiateParams = z.infer<typeof RenegotiateParamsSchema>;
+export type PublishLumaParams = z.infer<typeof PublishLumaParamsSchema>;
 
 export const JOB_PARAM_SCHEMAS = {
   draft_card: DraftCardParamsSchema,
-  confirm_card: ConfirmCardParamsSchema,
   match: MatchParamsSchema,
   negotiate: NegotiateParamsSchema,
+  renegotiate: RenegotiateParamsSchema,
+  publish_luma: PublishLumaParamsSchema,
 } as const;
 
 export type JobStatus = "queued" | "running" | "done" | "error";
 
 /** Job results. Every result carries the backend that produced it. */
 export interface DraftCardResult {
-  backend: BackendName;
-  card: Card;
-}
-export interface ConfirmCardResult {
   backend: BackendName;
   card: Card;
 }
@@ -228,13 +235,12 @@ export interface CommunityRow {
   status: CommunityStatus;
   card: Card;
   source_urls: string[];
-  /** Backend that drafted the card. "mock" cards are sample data and must be labelled. */
-  backend: BackendName | null;
   updated_at: string;
 }
 
-/** Columns anon may read from jobs. `passcode` is deliberately not readable by anon. */
-export const JOB_PUBLIC_COLUMNS = "id,type,params,status,progress,result,error,created_at";
+/** Columns anon may read from jobs. Jobs have no passcode column. */
+export const JOB_PUBLIC_COLUMNS =
+  "id,type,params,status,progress,result,error,created_at,claimed_at";
 
 export interface JobRow {
   id: string;
@@ -245,6 +251,7 @@ export interface JobRow {
   result: unknown;
   error: string | null;
   created_at: string;
+  claimed_at: string | null;
 }
 
 export const RUN_STATUSES = [
@@ -267,8 +274,8 @@ export interface RunRow {
   status: RunStatus;
   consensus: boolean | null;
   deal_id: string | null;
-  /** Verified match candidates for the chosen partners (copied from the match job). */
-  match: MatchCandidate[] | null;
+  round: number;
+  decline_reason: string | null;
   /** Community id whose Bot is currently writing, for the typing indicator. */
   typing: string | null;
   error: string | null;
@@ -289,24 +296,40 @@ export interface MessageRow {
   created_at: string;
 }
 
-export type DealStatus = "pending_approval" | "confirmed" | "declined" | "changes_requested";
+export const DEAL_STATUSES = ["pending_approval", "confirmed", "declined"] as const;
+export type DealStatus = (typeof DEAL_STATUSES)[number];
 
 export interface DealRow {
   id: string;
   run_id: string;
   deal: Deal;
+  round: number;
   status: DealStatus;
   created_at: string;
 }
 
-export type ApprovalStatus = "pending" | "approved" | "declined" | "changes_requested";
+export const APPROVAL_STATUSES = ["pending", "approved", "declined", "renegotiate"] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
+/** One recorded decision inside `approvals.history`. */
+export interface ApprovalHistoryEntry {
+  round: number;
+  decision: ApprovalStatus;
+  note: string | null;
+  at: string;
+}
+
+/** Primary key is (run_id, community_id). */
 export interface ApprovalRow {
-  deal_id: string;
+  run_id: string;
   community_id: string;
+  deal_id: string;
   token: string;
   status: ApprovalStatus;
   note: string | null;
+  round: number;
+  quick_reasons: string[];
+  history: ApprovalHistoryEntry[];
   updated_at: string;
 }
 
