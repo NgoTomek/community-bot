@@ -1,0 +1,82 @@
+# Claude docs sync (OPTIONAL, OFF BY DEFAULT)
+#
+# When a PR carries the `update-docs` label, Claude reads AGENTS.md, diffs the PR against its base
+# and updates docs/HANDOFF.md, docs/openapi.yaml, docs/CHANGELOG.md, .env.example and
+# supabase/migrations to match the code, then runs `npm run docs:check` and pushes the result.
+#
+# How to turn it on:
+#   1. Add the repository secret ANTHROPIC_API_KEY (Settings -> Secrets and variables -> Actions).
+#   2. Create the label `update-docs` (Issues -> Labels -> New label).
+#   3. Add the label to a PR. It re-runs on every new push while the label is present.
+# Without the secret or the label, the job is skipped. PRs from forks can't use it (no secrets).
+
+name: CommGrok docs sync (Claude, optional)
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: commgrok-claude-docs-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    if: contains(github.event.pull_request.labels.*.name, 'update-docs')
+    steps:
+      - name: Check for the ANTHROPIC_API_KEY secret
+        if: env.HAS_ANTHROPIC_KEY != 'true'
+        run: echo "::notice::ANTHROPIC_API_KEY is not set; skipping Claude docs sync."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/commgrok/package-lock.json
+
+      - name: Claude updates the docs
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--allowedTools Edit,Write,Read,Glob,Grep,Bash(cd apps/commgrok*),Bash(npm ci*),Bash(npm run docs:check*),Bash(git diff*),Bash(git log*)"
+          prompt: |
+            You are keeping the documentation of the CommGrok app (apps/commgrok in this monorepo) in sync with its code.
+            Work inside apps/commgrok: `cd apps/commgrok` before running npm commands.
+            1. Read apps/commgrok/AGENTS.md first; it defines the documentation contract and the docs:* marker formats.
+            2. Run `git diff origin/${{ github.base_ref }}...HEAD` to see what this PR changes.
+            3. Update ONLY these to match the code changes: docs/HANDOFF.md, docs/openapi.yaml,
+               docs/CHANGELOG.md (add entries under "## [Unreleased]"), .env.example and
+               supabase/migrations/. Do not change application code.
+            4. Run `npm ci && npm run docs:check` and fix the docs until it passes.
+            Keep edits minimal and factual. Do not commit; a later step commits your changes.
+
+      - name: Commit and push docs changes
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        run: |
+          cd apps/commgrok
+          git add docs .env.example supabase
+          if git diff --cached --quiet; then
+            echo "No docs changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: sync with code (Claude) [skip ci]"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

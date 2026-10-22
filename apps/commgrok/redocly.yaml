@@ -1,0 +1,6 @@
+# Redocly config for `npm run docs:check` (lint of docs/openapi.yaml).
+extends:
+  - recommended
+rules:
+  # The spec lists the local dev server (http://localhost:3000) on purpose.
+  no-server-example.com: off

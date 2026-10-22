@@ -1,0 +1,113 @@
+name: CommGrok CI
+
+# CommGrok lives in apps/commgrok; this workflow only runs when it (or this file) changes.
+
+on:
+  push:
+    paths:
+      - "apps/commgrok/**"
+      - ".github/workflows/commgrok-*.yml"
+  pull_request:
+    paths:
+      - "apps/commgrok/**"
+      - ".github/workflows/commgrok-*.yml"
+
+concurrency:
+  group: commgrok-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: apps/commgrok
+
+jobs:
+  check:
+    name: Typecheck, build, docs check, smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PROPOSALS_API_KEY: ci-dummy-key
+      AUTH_SECRET: ci-dummy-secret-not-for-production
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/commgrok/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Docs check (routes, env, paths, enums, redocly lint)
+        run: npm run docs:check
+
+      - name: Start the app
+        run: |
+          npm start > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://localhost:3000/; then
+              echo "App is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "App did not start within 60s"
+          cat /tmp/next.log
+          exit 1
+
+      - name: Reset demo data
+        run: npm run demo:reset
+
+      - name: Smoke test
+        run: npm run smoke -- --base http://localhost:3000 --key "$PROPOSALS_API_KEY"
+
+      - name: Server log (on failure)
+        if: failure()
+        run: cat /tmp/next.log || true
+
+  stamp:
+    name: Stamp apps/commgrok/docs/HANDOFF.md
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/commgrok/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify docs and write the stamp
+        run: npm run docs:check -- --stamp --skip-lint
+
+      - name: Commit the stamp
+        run: |
+          if git diff --quiet -- docs/HANDOFF.md; then
+            echo "docs/HANDOFF.md unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/HANDOFF.md
+          git commit -m "docs: verify handoff against $(git rev-parse --short HEAD) [skip ci]"
+          git push
