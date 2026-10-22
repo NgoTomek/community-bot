@@ -5,7 +5,7 @@ import { useIdentity } from "../app/identity";
 import { usePresenter } from "../app/presenter";
 import { usePageTitle } from "../app/title";
 import { Avatar, AvatarStack } from "../components/Avatar";
-import { ApprovalPill, BackendBadge, RunStatusPill, SampleBadge } from "../components/Badges";
+import { ApprovalPill, BackendBadge, RunStatusPill } from "../components/Badges";
 import { EmptyState, ErrorState, Skeleton, SkeletonCard } from "../components/ui/States";
 import { useJob } from "../data/hooks";
 import type { ApprovalView, Run } from "../data/types";
@@ -144,8 +144,7 @@ function ThreadView({ t, run }: { t: ThreadData; run: Run }) {
               </span>
               <RunStatusPill run={run} />
               {run.round > 1 ? <span className="pill border-line text-muted">Round {run.round}</span> : null}
-              <BackendBadge backend={run.backend} title="The backend that ran this collab" />
-              {run.backend === "mock" ? <SampleBadge /> : null}
+              {run.backend !== "mock" ? <BackendBadge backend={run.backend} title="The backend that ran this collab" /> : null}
               <span className="text-faint">Started {relativeTime(run.createdAt)}</span>
             </div>
           </div>

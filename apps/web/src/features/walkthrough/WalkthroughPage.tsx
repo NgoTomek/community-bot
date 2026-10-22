@@ -1,7 +1,7 @@
 import type { Card } from "@community-bots/core";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, BadgeCheck, CalendarCheck, Check, FileText, MessagesSquare, Pause, Play, RotateCcw, Sparkles } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePageTitle } from "../../app/title";
 import { useTour } from "../../app/tour";
@@ -25,7 +25,7 @@ type Beat = { kind: "cast" } | { kind: "message"; index: number } | { kind: "dea
 
 const CHAPTERS = ["The communities", "The ask", "The Bots negotiate", "The deal", "Humans decide", "It goes live"];
 
-const CURRENT = "rounded-xl ring-2 ring-accent/60 ring-offset-4 ring-offset-bg";
+const CURRENT = "rounded-xl ring-2 ring-accent/60 ring-offset-4 ring-offset-bg max-lg:scroll-mb-80";
 
 function chapterOf(beat: Beat, data: ReplayData): number {
   if (beat.kind === "cast") return 0;
@@ -177,10 +177,30 @@ function Story({ bundle }: { bundle: ReplayBundle }) {
     return () => window.clearTimeout(timer);
   }, [running, at, beats, data, last]);
 
-  // Bring the newest part of the story into view.
+  // Keep the newest part of the story in view. On wide screens the chat scrolls inside its own
+  // panel, like a chat app, so the page itself never moves.
+  const stageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (beats[at].kind === "cast") return;
-    const timer = window.setTimeout(() => document.querySelector("[data-story-current]")?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    const timer = window.setTimeout(() => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const panel = stage.scrollHeight > stage.clientHeight + 1;
+      const current = beats[at].kind === "cast" ? null : stage.querySelector<HTMLElement>("[data-story-current]");
+      if (!panel) {
+        current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+      if (!current) {
+        stage.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const s = stage.getBoundingClientRect();
+      const c = current.getBoundingClientRect();
+      let delta = 0;
+      if (c.height > s.height - 24 || c.top < s.top) delta = c.top - s.top - 8;
+      else if (c.bottom > s.bottom) delta = c.bottom - s.bottom + 16;
+      if (delta) stage.scrollBy({ top: delta, behavior: "smooth" });
+    }, 60);
     return () => window.clearTimeout(timer);
   }, [at, beats]);
 
@@ -192,20 +212,18 @@ function Story({ bundle }: { bundle: ReplayBundle }) {
   const confirmed = data.run.status === "confirmed";
 
   return (
-    <div className="mx-auto max-w-[1240px] px-4 py-8 max-lg:pb-80 sm:px-6 sm:py-12">
-      <header className="max-w-3xl">
-        <p className="eyebrow">Walkthrough</p>
-        <h1 className="mt-3 font-display text-3xl leading-tight sm:text-5xl sm:leading-[1.08]">Watch three Bots plan one event</h1>
-        <p className="mt-4 text-lg leading-relaxed text-muted">
-          A recorded sample negotiation, one message at a time, with what each Bot did and why. People only step in to ask and to approve.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <SampleBadge />
+    <div className="mx-auto max-w-[1240px] px-4 py-6 max-lg:pb-80 sm:px-6 lg:py-8">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
+          <p className="eyebrow">Walkthrough</p>
+          <h1 className="mt-2 font-display text-3xl leading-tight sm:text-4xl">Watch three Bots plan one event</h1>
+          <p className="mt-2 max-w-2xl text-muted">A recorded sample negotiation, one message at a time, with what each Bot did and why.</p>
         </div>
+        <SampleBadge />
       </header>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-28 lg:self-start" aria-label="Story">
+      <div className="mt-6 grid gap-8 lg:h-[calc(100dvh-15.5rem)] lg:min-h-[520px] lg:grid-cols-[340px_minmax(0,1fr)]">
+        <aside className="lg:overflow-y-auto" aria-label="Story">
           <ol className="mb-6 space-y-1 max-lg:hidden">
             {CHAPTERS.map((label, i) => (
               <li key={label} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${i === chapter ? "bg-accent-soft font-semibold text-accent" : i < chapter ? "text-ink" : "text-faint"}`}>
@@ -261,7 +279,7 @@ function Story({ bundle }: { bundle: ReplayBundle }) {
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-4">
+        <div ref={stageRef} className="min-w-0 space-y-4 lg:overflow-y-auto lg:p-2 lg:pb-8 lg:pr-3">
           {beat.kind === "cast" ? (
             <div className="grid gap-4 md:grid-cols-3">
               {data.communities.map((c, i) => (

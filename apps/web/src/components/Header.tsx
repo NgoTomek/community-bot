@@ -1,4 +1,4 @@
-import { FlaskConical, Plus, Search as SearchIcon, Sparkles, X } from "lucide-react";
+import { Plus, Search as SearchIcon, Sparkles, X } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useNeedsYou } from "../app/needsYou";
@@ -39,22 +39,6 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
 
   return (
     <header className="site-header sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-md supports-[backdrop-filter]:bg-bg/75">
-      {source.kind === "mock" ? (
-        <div className="border-b border-warn/20 bg-warn-soft">
-          <p className="mx-auto flex max-w-[1240px] items-center gap-2 px-4 py-1.5 text-[13px] text-warn sm:px-6">
-            <FlaskConical size={14} className="shrink-0" aria-hidden />
-            <span>
-              <strong className="font-semibold">Sample data, not a real Bot run.</strong>
-              <span className="max-sm:hidden"> Every community, Bot post and deal here is invented so you can try the flow.</span>
-            </span>
-            {tour.available && !tour.active ? (
-              <button type="button" className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:no-underline" onClick={() => tour.start()}>
-                Take the guided tour →
-              </button>
-            ) : null}
-          </p>
-        </div>
-      ) : null}
       <div className="mx-auto flex h-14 max-w-[1240px] items-center gap-3 px-4 sm:px-6">
         {mobileSearch ? (
           <>
@@ -93,9 +77,11 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
               <button type="button" className="btn btn-ghost btn-icon md:hidden" onClick={() => setMobileSearch(true)} aria-label="Search">
                 <SearchIcon size={18} aria-hidden />
               </button>
-              <span className="max-sm:hidden">
-                <BackendBadge backend={backend} title={source.kind === "mock" ? "Sample data from the mock backend" : "Backend of the latest run"} />
-              </span>
+              {source.kind !== "mock" ? (
+                <span className="max-sm:hidden">
+                  <BackendBadge backend={backend} title="Backend of the latest run" />
+                </span>
+              ) : null}
               <IdentityMenu />
               <button type="button" className="btn btn-primary h-9 min-h-9 px-3" onClick={() => open()} aria-keyshortcuts="n">
                 <Plus size={16} aria-hidden />

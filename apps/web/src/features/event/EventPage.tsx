@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { useProjector } from "../../app/projector";
 import { usePageTitle } from "../../app/title";
 import { Avatar } from "../../components/Avatar";
-import { DraftBadge, SampleBadge } from "../../components/Badges";
+import { DraftBadge } from "../../components/Badges";
 import { EmptyState, ErrorState, Skeleton, SkeletonCard } from "../../components/ui/States";
 import { useData } from "../../data/DataProvider";
 import { useEvent, useLive, useRun } from "../../data/hooks";
@@ -37,7 +37,7 @@ export default function EventPage() {
           <EmptyState
             icon={<CalendarX2 size={32} aria-hidden />}
             title="We can't find this event"
-            body="The link may be incomplete, or the collab was removed. Events from the sample data reset when the sample world does."
+            body="The link may be incomplete, or the collab was removed."
             action={
               <Link to="/" className="btn btn-primary">
                 Go to the board
@@ -70,12 +70,10 @@ export default function EventPage() {
 }
 
 function EventView({ info, round, runId, run, refreshError }: { info: EventInfo; round: number | null; runId: string | null; run: Run | null; refreshError: string | null }) {
-  const source = useData();
   const { present } = useProjector();
   const { deal, dealId } = info;
   const url = appUrl(`/event/${dealId}`);
   const phase = eventPhase({ dealId, allApproved: info.allApproved, round, run });
-  const sample = info.backend === "mock" || source.kind === "mock";
 
   const names = useMemo(() => {
     const out: Record<string, string> = {};
@@ -91,7 +89,6 @@ function EventView({ info, round, runId, run, refreshError }: { info: EventInfo;
           <Link to="/" className="present-hide inline-flex items-center gap-1 text-sm text-muted hover:text-ink print:hidden">
             <ArrowLeft size={14} aria-hidden /> Board
           </Link>
-          {sample ? <SampleBadge /> : null}
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">

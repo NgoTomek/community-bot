@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { usePageTitle } from "../../app/title";
 import { Avatar } from "../../components/Avatar";
-import { ApprovalPill, SampleBadge, YouTag } from "../../components/Badges";
+import { ApprovalPill, YouTag } from "../../components/Badges";
 import { EmptyState, ErrorState, Skeleton, SkeletonCard } from "../../components/ui/States";
 import { useData } from "../../data/DataProvider";
 import { useLive, useNow, useRequestDetail, useRun } from "../../data/hooks";
@@ -62,10 +62,8 @@ function Page({ children }: { children: ReactNode }) {
 }
 
 function RequestView({ request, token, runId, run, refreshError }: { request: RequestDetail; token: string; runId: string | null; run: Run | null; refreshError: string | null }) {
-  const source = useData();
   const now = useNow();
   const { deal, community, round, status, note, others, history, dealId } = request;
-  const sample = source.kind === "mock" || run?.backend === "mock";
 
   const inDeal = useMemo(() => (deal ? new Set(deal.communities.map((c) => c.id)) : null), [deal]);
   const current = others.filter((o) => !inDeal || inDeal.has(o.communityId));
@@ -78,7 +76,6 @@ function RequestView({ request, token, runId, run, refreshError }: { request: Re
     <Page>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="eyebrow">For {community.name}</p>
-        {sample ? <SampleBadge compact /> : null}
       </div>
 
       {deal ? (

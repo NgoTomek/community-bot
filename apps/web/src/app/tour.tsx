@@ -48,7 +48,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     title: "Community Bots in two minutes",
     body: "Organisers paste a link to their community. Its Bot drafts a card, finds partner communities and negotiates a joint event with their Bots, in the open. Nothing is agreed until every organiser says yes.",
-    hint: "This is sample data running in your browser, so click anything.",
+    hint: "Everything here is clickable, so try anything.",
     route: () => "/",
     spot: "hero",
     seconds: 9,
@@ -404,7 +404,7 @@ function TourOffer({ onStart, onWatch, onDismiss }: { onStart: () => void; onWat
         </span>
         <div>
           <p className="font-semibold">New here?</p>
-          <p className="text-sm text-muted">Watch the Bots negotiate a sample event, or take the two-minute tour of the site.</p>
+          <p className="text-sm text-muted">Watch the Bots negotiate an event, or take the two-minute tour of the site.</p>
         </div>
       </div>
       <div className="flex justify-end gap-2">

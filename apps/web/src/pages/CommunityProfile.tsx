@@ -5,7 +5,7 @@ import { useIdentity } from "../app/identity";
 import { usePresenter } from "../app/presenter";
 import { usePageTitle } from "../app/title";
 import { Avatar, AvatarStack } from "../components/Avatar";
-import { DraftBadge, RunStatusPill, SampleBadge, YouTag } from "../components/Badges";
+import { DraftBadge, RunStatusPill, YouTag } from "../components/Badges";
 import { ConfirmDialog } from "../components/ui/Dialog";
 import { EmptyState, ErrorState, Skeleton, SkeletonCard } from "../components/ui/States";
 import { useToast } from "../components/ui/Toast";
@@ -228,7 +228,6 @@ function EditCard({ community, onClose }: { community: Community; onClose: (save
 }
 
 function Profile({ id }: { id: string }) {
-  const source = useData();
   const community = useCommunity(id);
   const { communityIds } = useIdentity();
   const { open } = useNewRequest();
@@ -274,7 +273,6 @@ function Profile({ id }: { id: string }) {
             <div className="flex flex-wrap items-center gap-2">
               {c.status === "confirmed" ? <ConfirmedPill /> : <DraftBadge />}
               {communityIds.includes(c.id) ? <YouTag /> : null}
-              {source.kind === "mock" ? <SampleBadge /> : null}
             </div>
             <h1 className="mt-2 font-display text-3xl leading-tight sm:text-4xl">{c.name}</h1>
             {card.tagline ? (
