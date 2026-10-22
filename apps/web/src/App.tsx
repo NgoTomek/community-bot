@@ -10,6 +10,7 @@ import { Header } from "./components/Header";
 import { ToastProvider } from "./components/ui/Toast";
 import EventPage from "./features/event/EventPage";
 import { NewRequestProvider } from "./features/request/NewRequest";
+import WalkthroughPage from "./features/walkthrough/WalkthroughPage";
 import Add from "./pages/Add";
 import Board from "./pages/Board";
 import CommunityProfile from "./pages/CommunityProfile";
@@ -41,6 +42,7 @@ export default function App() {
                           <Routes>
                             <Route path="/" element={<Board />} />
                             <Route path="/how-it-works" element={<HowItWorks />} />
+                            <Route path="/walkthrough" element={<WalkthroughPage />} />
                             <Route path="/run/:runId" element={<Thread />} />
                             <Route path="/event/:dealId" element={<EventPage />} />
                             <Route path="/r/:token" element={<RequestLink />} />

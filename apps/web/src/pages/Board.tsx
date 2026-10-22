@@ -1,5 +1,5 @@
 import { LayoutGroup } from "framer-motion";
-import { ArrowRight, Link2, Play, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Link2, MessagesSquare, Plus, Sparkles } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useIdentity } from "../app/identity";
@@ -135,16 +135,16 @@ function PasteHero({ big = false }: { big?: boolean }) {
       <p className="mt-5 max-w-2xl text-lg text-muted">
         Paste a public link to your community. Its Bot drafts a card, finds communities that fit, and negotiates with their Bots in the open. Nothing is agreed until every organiser says yes.
       </p>
-      {tour.available ? (
-        <div className="mt-6 flex flex-wrap items-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <Link to="/walkthrough" className="btn btn-primary btn-lg">
+          <MessagesSquare size={16} aria-hidden /> Watch the Bots negotiate
+        </Link>
+        {tour.available ? (
           <button type="button" className="btn btn-lg" onClick={() => tour.start()}>
-            <Sparkles size={16} className="text-accent" aria-hidden /> Take the two-minute guided demo
+            <Sparkles size={16} className="text-accent" aria-hidden /> Take the guided tour
           </button>
-          <button type="button" className="btn btn-ghost btn-lg" onClick={() => tour.start(true)}>
-            <Play size={16} aria-hidden /> Watch it play by itself
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
       <form onSubmit={submit} className="mt-8 flex max-w-2xl flex-col gap-2 sm:flex-row">
         <label htmlFor="paste-link" className="sr-only">
           Paste your community link

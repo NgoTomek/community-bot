@@ -49,7 +49,7 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
             </span>
             {tour.available && !tour.active ? (
               <button type="button" className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:no-underline" onClick={() => tour.start()}>
-                Take the guided demo →
+                Take the guided tour →
               </button>
             ) : null}
           </p>
@@ -73,6 +73,9 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
                 Board
                 {pending.length ? <span className="ml-1.5 rounded-full bg-accent-bg px-1.5 py-0.5 text-[11px] font-semibold text-accent-fg">{pending.length}</span> : null}
               </NavLink>
+              <NavLink to="/walkthrough" className={navClass}>
+                Walkthrough
+              </NavLink>
               <NavLink to="/demo" className={navClass}>
                 Replay
               </NavLink>
@@ -81,7 +84,7 @@ export const Header = forwardRef<HTMLInputElement>(function Header(_, searchRef)
               </NavLink>
               {tour.available ? (
                 <button type="button" className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-accent-soft" onClick={() => tour.start()}>
-                  <Sparkles size={14} aria-hidden /> Guided demo
+                  <Sparkles size={14} aria-hidden /> Guided tour
                 </button>
               ) : null}
             </nav>

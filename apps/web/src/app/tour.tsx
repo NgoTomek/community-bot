@@ -288,6 +288,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
       ) : offer && location.pathname === "/" ? (
         <TourOffer
           onStart={() => start()}
+          onWatch={() => {
+            markSeen();
+            setOffer(false);
+            navigate("/walkthrough");
+          }}
           onDismiss={() => {
             markSeen();
             setOffer(false);
@@ -335,17 +340,17 @@ function TourCard({
   const step = TOUR_STEPS[index];
   const last = index === LAST;
   return (
-    <aside aria-label="Guided demo" className={`${cardClass(side)} p-4 sm:p-5`}>
+    <aside aria-label="Guided tour" className={`${cardClass(side)} p-4 sm:p-5`}>
       <div className="flex items-center gap-2">
         <Sparkles size={15} className="shrink-0 text-accent" aria-hidden />
         <p className="eyebrow">
-          Guided demo · {index + 1} of {TOUR_STEPS.length}
+          Guided tour · {index + 1} of {TOUR_STEPS.length}
         </p>
         <div className="ml-auto flex items-center gap-1">
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onToggleAuto} aria-label={playing ? "Pause the demo" : "Play the demo by itself"} title={playing ? "Pause" : "Play by itself"}>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onToggleAuto} aria-label={playing ? "Pause the tour" : "Play the tour by itself"} title={playing ? "Pause" : "Play by itself"}>
             {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
           </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onExit} aria-label="Close the guided demo" title="Close">
+          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onExit} aria-label="Close the guided tour" title="Close">
             <X size={16} aria-hidden />
           </button>
         </div>
@@ -390,24 +395,27 @@ function TourCard({
   );
 }
 
-function TourOffer({ onStart, onDismiss }: { onStart: () => void; onDismiss: () => void }) {
+function TourOffer({ onStart, onWatch, onDismiss }: { onStart: () => void; onWatch: () => void; onDismiss: () => void }) {
   return (
-    <aside aria-label="Guided demo" className={`${cardClass("right")} flex flex-col gap-3 p-4 sm:p-5`}>
+    <aside aria-label="Guided tour" className={`${cardClass("right")} flex flex-col gap-3 p-4 sm:p-5`}>
       <div className="flex items-start gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
           <Sparkles size={18} aria-hidden />
         </span>
         <div>
           <p className="font-semibold">New here?</p>
-          <p className="text-sm text-muted">Take the two-minute guided demo of every feature.</p>
+          <p className="text-sm text-muted">Watch the Bots negotiate a sample event, or take the two-minute tour of the site.</p>
         </div>
       </div>
       <div className="flex justify-end gap-2">
         <button type="button" className="btn btn-ghost" onClick={onDismiss}>
           Not now
         </button>
-        <button type="button" className="btn btn-primary" onClick={onStart}>
-          Start the demo
+        <button type="button" className="btn" onClick={onStart}>
+          Tour the site
+        </button>
+        <button type="button" className="btn btn-primary" onClick={onWatch}>
+          Watch the Bots
         </button>
       </div>
     </aside>
