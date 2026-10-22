@@ -21,12 +21,12 @@ Dates always come from the system clock.
 
 1. Create a Supabase project.
 2. Run every file in `supabase/migrations` in filename order in the SQL editor (`0001`, `0002`, then `0010` to `0013`), or apply them with the Supabase MCP.
-3. Copy `.env.example` to `.env` at the repo root and fill in the URL and anon key.
+3. Copy `.env.example` to `.env`. Leave `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_PHONE_BASE_URL` empty: the web app stays on the in-browser mock, and approval links stay on this app at `/r/:token`. Fill those three in only when you point it at a Supabase project.
 4. Paste the service role key into `apps/worker/.env` as `SUPABASE_SERVICE_ROLE_KEY`. That file is gitignored. Never put this key in the web app.
 5. `npm install`
 6. Install the Grok Bot skill if you want real Bots: `npx skills add adamanz/grok-bot-skill -g -a cursor`. The CLI lands at `~/.cursor/skills/grok-bot/scripts/grokbot.py`. For a first run, leave `BACKEND=mock`.
 7. `npm run worker` in one terminal and `npm run dev` in another.
-8. `npm run seed:sample` loads the fixed demo run. `npm run seed` queues draft cards for the communities in `seed/communities.json`.
+8. The in-browser mock already includes example cards, so a first run needs no seed. `npm run seed:sample` loads the fixed demo run once Supabase is configured. `seed/communities.json` starts empty: add `{ "name", "sourceUrls" }` with a public HTML page (not LinkedIn or Discord) before `npm run seed`.
 
 `BACKEND=openai` uses any OpenAI-compatible endpoint (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`). `BACKEND=grokbot` uses the Grok Bot desktop app via the skill CLI. Mock runs are stamped `backend: mock` and the UI shows **Sample data, not a real Bot run**.
 

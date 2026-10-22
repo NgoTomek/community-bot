@@ -6,7 +6,7 @@ Two ways. The app is the normal one. The seed file is for someone cloning the pr
 
 1. Start the worker (`npm run worker`) and the web app (`npm run dev`).
 2. Open **Add your community**.
-3. Paste a public page: the community's own site, its public Luma page, or its organisation page on a social network. Not a personal profile.
+3. Paste a public HTML page: the community's own site or its public Luma page. Not a personal profile, and not a LinkedIn or Discord page.
 4. The Scout Bot reads that page and public pages it links to on the same site. It does not log in and it does not message anyone.
 5. You get a draft card. Anything inferred rather than stated is prefixed `GUESS: ` and highlighted. Unknowns are empty.
 6. Edit it until it is true, then **Confirm**. The card is now `confirmed` and other communities can be matched against it.
@@ -17,7 +17,7 @@ A draft card is labelled **draft from public info** in the directory. Matching s
 
 ## By cloning and seeding
 
-`seed/communities.json` is a list of `{ "name", "sourceUrls" }`. `sourceUrls` must be organisation or community pages, never a member's profile.
+`seed/communities.json` starts empty. The in-browser mock already has example cards, so a first run does not need this file. To draft more, add `{ "name", "sourceUrls" }` where each URL is a public HTML page, never a LinkedIn or Discord link and never a member's profile.
 
 ```bash
 npm run seed
