@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit: typecheck + docs drift check (staged mode also enforces the CHANGELOG rule).
+# Enabled by `npm install` (the "prepare" script runs scripts/install-hooks.mjs).
+# Works when this app is the repo root or a monorepo subfolder (e.g. apps/commgrok).
+# Emergency bypass: git commit --no-verify
+set -u
+
+# Run from this app's folder (the parent of .githooks).
+cd "$(dirname "$0")/.." || exit 1
+
+# In a monorepo, skip unless this commit touches this app.
+if [ -z "$(git diff --cached --name-only --relative)" ]; then
+  exit 0
+fi
+
+fail() {
+  echo ""
+  echo "pre-commit: $1 failed. Fix the problems above (the docs contract is in AGENTS.md)."
+  echo "Emergency bypass (CI still runs these checks): git commit --no-verify"
+  exit 1
+}
+
+npm run --silent typecheck || fail "npm run typecheck"
+npm run --silent docs:check -- --staged || fail "npm run docs:check -- --staged"
+exit 0

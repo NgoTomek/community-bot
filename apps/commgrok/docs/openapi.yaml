@@ -1,0 +1,761 @@
+openapi: 3.1.0
+info:
+  title: CommGrok API
+  version: 0.3.0
+  summary: Bot-proposed community events, organiser decisions, public calendar.
+  description: |
+    Source of truth for the bot-facing API (tag **Bot**). Organiser, auth and public
+    endpoints are documented too, so `npm run docs:check` can verify every route.
+
+    Flow: a bot proposes (`POST /api/proposals`) -> organisers decide
+    (accept / reject / renegotiate) -> the bot polls `GET /api/proposals?status=renegotiating`
+    and sends a revision with `PUT /api/proposals/{id}` -> when every required team accepts
+    the current revision the event is published exactly once. See docs/HANDOFF.md.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:3000
+    description: Local dev (or your Cloudflare tunnel URL)
+tags:
+  - name: Bot
+    description: Bot platform endpoints. Header X-API-Key = PROPOSALS_API_KEY.
+  - name: Organiser
+    description: Organiser actions. Requires the cb_session cookie of an account with a team.
+  - name: Public
+    description: Guest endpoints. No account needed.
+  - name: Auth
+    description: Organiser accounts (email + password, invite code to sign up).
+  - name: Internal
+    description: Demo and live-update plumbing.
+security: []
+paths:
+  /api/proposals:
+    get:
+      tags: [Bot]
+      operationId: listProposals
+      summary: Poll open proposals (e.g. the ones sent back to the bots)
+      security:
+        - ApiKey: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by status. Defaults to every open proposal (proposed and renegotiating).
+          schema:
+            $ref: "#/components/schemas/EventStatus"
+      responses:
+        "200":
+          description: Open proposals, newest organiser note first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Bot]
+      operationId: createProposal
+      summary: Propose a new event
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Created. Status is proposed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/proposals/{id}:
+    put:
+      tags: [Bot]
+      operationId: reviseProposal
+      summary: Send a revised version of a proposal
+      description: |
+        Send only the fields that change. Bumps `revision`, resets every approval and sets
+        the status back to proposed. Allowed while proposed or renegotiating.
+      security:
+        - ApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Revision"
+      responses:
+        "200":
+          description: Revised. Status is proposed again.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/events:
+    post:
+      tags: [Organiser]
+      operationId: createManualProposal
+      summary: Create a proposal by hand (organiser form)
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  slug:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/events/{id}:
+    get:
+      tags: [Bot]
+      operationId: getEvent
+      summary: Read one event with status, decisions, latest note and RSVP counts
+      description: Published events are public. Other statuses need X-API-Key or an organiser session.
+      security:
+        - {}
+        - ApiKey: []
+        - SessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: The event.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Organiser]
+      operationId: editEvent
+      summary: Organiser inline edit of an open proposal (resets approvals)
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventPatch"
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  slug:
+                    type: string
+                  revision:
+                    type: integer
+                  changed:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/events/{id}/decision:
+    post:
+      tags: [Organiser]
+      operationId: decide
+      summary: Accept, reject or send back to the bots
+      description: |
+        The team comes from the session. renegotiate requires a note (3+ characters).
+        Reject and renegotiate win over pending accepts. Only proposed or renegotiating
+        events can be decided.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionRequest"
+      responses:
+        "200":
+          description: Recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/events/{id}/cancel:
+    post:
+      tags: [Organiser]
+      operationId: cancelEvent
+      summary: Cancel an event
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Cancelled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: "#/components/schemas/EventStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/events/{id}/rsvp:
+    post:
+      tags: [Public]
+      operationId: rsvp
+      summary: Guest RSVP (name + email, no account). Waitlists when full.
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Already registered (same email).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpResponse"
+        "201":
+          description: Registered.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Organiser login (sets the cb_session cookie)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                next:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthOk"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      operationId: signup
+      summary: Create an organiser account (invite code required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, teamId, inviteCode]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+                teamId:
+                  type: string
+                inviteCode:
+                  type: string
+                next:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Log out (clears the cookie)
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/auth/team:
+    post:
+      tags: [Auth]
+      operationId: switchTeam
+      summary: Set or switch the logged-in organiser's team
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [teamId]
+              properties:
+                teamId:
+                  type: string
+                next:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthOk"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/demo/reset:
+    post:
+      tags: [Internal]
+      operationId: demoReset
+      summary: Re-seed the demo data (local JSON store or Supabase)
+      security:
+        - ApiKey: []
+        - SessionCookie: []
+      responses:
+        "200":
+          description: Reset.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/live:
+    get:
+      tags: [Internal]
+      operationId: liveUpdates
+      summary: Server-sent events for live refresh (local mode)
+      responses:
+        "200":
+          description: An event stream. Each `data:` line means "something changed, refresh".
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+webhooks:
+  eventNotification:
+    post:
+      tags: [Bot]
+      operationId: eventWebhook
+      summary: We POST this to EVENTS_WEBHOOK_URL (fallback PUBLISH_WEBHOOK_URL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookPayload"
+      responses:
+        "200":
+          description: Any 2xx acknowledges. Each delivery is logged on the event.
+        "400":
+          description: Ignored by us, but logged.
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Shared secret PROPOSALS_API_KEY.
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: cb_session
+      description: HMAC-signed organiser session from /api/auth/login.
+  parameters:
+    EventId:
+      name: id
+      in: path
+      required: true
+      description: Event id (uuid) or slug.
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Validation error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Missing or wrong API key, or not logged in.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Logged in, but your team can't do this.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Not allowed in the event's current status (e.g. rejected or published), or a duplicate.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    AuthOk:
+      description: OK. Where to go next.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ok:
+                type: boolean
+              redirect:
+                type: string
+  schemas:
+    EventStatus:
+      type: string
+      enum: [proposed, renegotiating, rejected, published, cancelled]
+      description: proposed and renegotiating are open; rejected is final; only published (and cancelled) are public.
+    Decision:
+      type: string
+      enum: [approved, rejected, renegotiate]
+      description: approved = Accept, rejected = Reject (final), renegotiate = Send back to bots (note required).
+    WebhookType:
+      type: string
+      enum: [event.published, event.rejected, event.renegotiate]
+    TeamState:
+      type: string
+      enum: [waiting, approved, rejected, renegotiate, stale]
+      description: Per team, for the current revision. stale = accepted an earlier revision.
+    EventType:
+      type: string
+      enum: [meetup, talk, workshop, social, hackathon, other]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    Host:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        avatar_url:
+          type: [string, "null"]
+    EventFields:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+        slug:
+          type: string
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        communities:
+          type: array
+          items:
+            type: string
+        description_md:
+          type: string
+        start_at:
+          type: string
+          format: date-time
+          description: ISO 8601 with an offset.
+        end_at:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+          default: Europe/London
+        venue_name:
+          type: [string, "null"]
+        venue_address:
+          type: [string, "null"]
+        online_url:
+          type: [string, "null"]
+        cover_url:
+          type: [string, "null"]
+        capacity:
+          type: [integer, "null"]
+        price_label:
+          type: string
+          default: Free
+        hosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Host"
+        visibility:
+          type: string
+          enum: [public, unlisted]
+    EventInput:
+      allOf:
+        - $ref: "#/components/schemas/EventFields"
+        - type: object
+          required: [title, start_at]
+          properties:
+            required_team_ids:
+              type: array
+              items:
+                type: string
+              description: Defaults to every team.
+    EventPatch:
+      $ref: "#/components/schemas/EventFields"
+    Revision:
+      allOf:
+        - $ref: "#/components/schemas/EventFields"
+        - type: object
+          properties:
+            message:
+              type: string
+              description: Shown in the activity log, e.g. "Revised after organiser note ...".
+    DecisionNote:
+      type: object
+      properties:
+        decision:
+          $ref: "#/components/schemas/Decision"
+        note:
+          type: string
+        by:
+          type: string
+        team:
+          type: [string, "null"]
+        at:
+          type: string
+          format: date-time
+        revision:
+          type: integer
+    Event:
+      allOf:
+        - $ref: "#/components/schemas/EventFields"
+        - type: object
+          properties:
+            id:
+              type: string
+            status:
+              $ref: "#/components/schemas/EventStatus"
+            source:
+              type: string
+              enum: [bot, manual]
+            revision:
+              type: integer
+            published_at:
+              type: [string, "null"]
+            created_at:
+              type: string
+            updated_at:
+              type: string
+            url:
+              type: string
+              description: Public event page (uses the request host).
+            ics_url:
+              type: string
+            review_url:
+              type: string
+            latest_note:
+              oneOf:
+                - $ref: "#/components/schemas/DecisionNote"
+                - type: "null"
+            approvals:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  enum: [all_teams, any_organiser]
+                approved:
+                  type: integer
+                required:
+                  type: integer
+                teams:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      team_id:
+                        type: string
+                      team_name:
+                        type: string
+                      state:
+                        $ref: "#/components/schemas/TeamState"
+                      approver_name:
+                        type: [string, "null"]
+                      note:
+                        type: [string, "null"]
+                      at:
+                        type: [string, "null"]
+            rsvps:
+              type: object
+              properties:
+                going:
+                  type: integer
+                waitlist:
+                  type: integer
+                spots_left:
+                  type: [integer, "null"]
+    RevisionResult:
+      allOf:
+        - $ref: "#/components/schemas/Event"
+        - type: object
+          properties:
+            changed:
+              type: array
+              items:
+                type: string
+              description: Labels of the fields that changed.
+            changes:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  from: {}
+                  to: {}
+              description: Display-ready diff, keyed by field label.
+            responded_to:
+              type: [string, "null"]
+              description: The organiser note this revision answers.
+    ProposalList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+    DecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          $ref: "#/components/schemas/Decision"
+        note:
+          type: string
+          description: Required (3+ characters) for renegotiate; optional reason for rejected.
+    DecisionResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/EventStatus"
+        justPublished:
+          type: boolean
+          description: true only on the request that published the event.
+        url:
+          type: string
+        slug:
+          type: string
+    RsvpResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [going, waitlist]
+        already:
+          type: boolean
+    WebhookPayload:
+      type: object
+      required: [type, event]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebhookType"
+        event:
+          $ref: "#/components/schemas/Event"
+        note:
+          type: [string, "null"]
+        decided_by:
+          type: [string, "null"]
+        team:
+          type: [string, "null"]

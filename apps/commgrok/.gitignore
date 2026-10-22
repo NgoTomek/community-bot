@@ -1,0 +1,22 @@
+# deps
+/node_modules
+
+# next
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# local demo database (created on first run)
+/.data/
+
+# env: never commit secrets
+.env
+.env*.local
+.env.development
+.env.production
+
+# misc
+.DS_Store
+*.log
+.vercel

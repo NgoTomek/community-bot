@@ -1,0 +1,70 @@
+name: CommGrok docs drift
+
+# Comments on a PR that changes CommGrok code (apps/commgrok/app/api, lib or supabase) without touching apps/commgrok/docs/.
+# The comment is updated in place (hidden marker), never duplicated.
+
+on:
+  pull_request:
+    paths:
+      - "apps/commgrok/**"
+      - ".github/workflows/commgrok-*.yml"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: List changed files
+        id: changed
+        run: |
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > changed.txt
+          grep -E '^apps/commgrok/(app/api/|lib/|supabase/)' changed.txt > code.txt || true
+          grep -E '^apps/commgrok/docs/' changed.txt > docs.txt || true
+          echo "code=$(wc -l < code.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "docs=$(wc -l < docs.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "Code files changed:"; cat code.txt
+          echo "Docs files changed:"; cat docs.txt
+
+      - name: Comment on the PR
+        if: steps.changed.outputs.code != '0' && steps.changed.outputs.docs == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- docs-drift-bot -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const agents = `${context.serverUrl}/${owner}/${repo}/blob/${context.payload.pull_request.head.sha}/apps/commgrok/AGENTS.md`;
+            const files = fs.readFileSync('code.txt', 'utf8').split('\n').filter(Boolean);
+            const body = [
+              marker,
+              '### 📚 Docs may be out of date',
+              '',
+              'This PR changes code covered by the documentation contract in [`apps/commgrok/AGENTS.md`](' + agents + ') but does not touch anything under `docs/`:',
+              '',
+              ...files.map((f) => `- \`${f}\``),
+              '',
+              'Please check and update as needed:',
+              '- `apps/commgrok/docs/HANDOFF.md` (statuses, decisions, webhook types, env table)',
+              '- `apps/commgrok/docs/openapi.yaml` (routes, methods, enums)',
+              '- `apps/commgrok/docs/CHANGELOG.md` (an entry under `## [Unreleased]`)',
+              '- `.env.example` and `supabase/migrations/` if config or schema changed',
+              '',
+              'Run `npm run docs:check` in apps/commgrok to verify. If no docs change is needed, ignore this comment.',
+              'Tip: add the `update-docs` label to let Claude sync the docs (if enabled for this repo).',
+            ].join('\n');
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number, per_page: 100 });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
