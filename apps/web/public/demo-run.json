@@ -1,0 +1,402 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-22T18:47:25.731Z",
+  "run": {
+    "id": "218e0123-208d-4f90-838e-0449228e02b6",
+    "lead_id": "climate-tech-north",
+    "need": "A climate game jam for 60 people on a Friday evening. We need a big room and an audience.",
+    "partner_ids": [
+      "student-robotics-society",
+      "indie-game-night"
+    ],
+    "backend": "mock",
+    "status": "confirmed",
+    "consensus": true,
+    "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+    "round": 1,
+    "decline_reason": null,
+    "typing": null,
+    "error": null,
+    "created_at": "2026-10-19T18:47:25.667Z"
+  },
+  "cards": {
+    "climate-tech-north": {
+      "name": "Climate Tech North",
+      "status": "confirmed",
+      "card": {
+        "id": "climate-tech-north",
+        "name": "Climate Tech North",
+        "tagline": "People working on climate solutions in the north",
+        "location": "Liverpool",
+        "members": "450 members",
+        "runs": [
+          {
+            "event": "Climate drinks",
+            "frequency": "Monthly"
+          }
+        ],
+        "offers": [
+          "Speakers from climate startups",
+          "A sponsor network of local climate funds",
+          "Promotion through our newsletter of 3,000 readers"
+        ],
+        "needs": [
+          "Engineers for climate hack days",
+          "A venue for 100 people"
+        ],
+        "constraints": {
+          "days": [
+            "Thu",
+            "Fri"
+          ],
+          "maxGroupSize": 100,
+          "notes": "Thursday and Friday evenings"
+        },
+        "tone": "Optimistic and evidence-led",
+        "sourceUrls": [
+          "https://example.org/climate-tech-north"
+        ]
+      }
+    },
+    "student-robotics-society": {
+      "name": "Student Robotics Society",
+      "status": "draft",
+      "card": {
+        "id": "student-robotics-society",
+        "name": "Student Robotics Society",
+        "tagline": "University students building robots",
+        "location": "Oxford Road campus",
+        "members": "GUESS: Around 200 students",
+        "runs": [
+          {
+            "event": "Build night",
+            "frequency": "GUESS: Weekly in term time"
+          }
+        ],
+        "offers": [
+          "A university lecture theatre for 150 people",
+          "Student volunteers"
+        ],
+        "needs": [
+          "Industry speakers",
+          "Sponsorship for competition kits"
+        ],
+        "constraints": {
+          "days": [
+            "Mon",
+            "Wed",
+            "Fri"
+          ],
+          "maxGroupSize": 150,
+          "notes": "GUESS: Term time only, Monday, Wednesday and Friday evenings"
+        },
+        "tone": "GUESS: Enthusiastic",
+        "sourceUrls": [
+          "https://example.org/student-robotics-society"
+        ]
+      }
+    },
+    "indie-game-night": {
+      "name": "Indie Game Night",
+      "status": "confirmed",
+      "card": {
+        "id": "indie-game-night",
+        "name": "Indie Game Night",
+        "tagline": "Play, test and talk about indie games",
+        "location": "Northern Quarter, Manchester",
+        "members": "250 regulars",
+        "runs": [
+          {
+            "event": "Playtest night",
+            "frequency": "Fortnightly"
+          }
+        ],
+        "offers": [
+          "A playtesting audience of 250 regulars",
+          "Game developers who give short talks"
+        ],
+        "needs": [
+          "A venue with screens",
+          "Sponsorship for prizes"
+        ],
+        "constraints": {
+          "days": [
+            "Fri",
+            "Sat"
+          ],
+          "maxGroupSize": 60,
+          "notes": "Friday nights and Saturday afternoons"
+        },
+        "tone": "Playful and relaxed",
+        "sourceUrls": [
+          "https://example.org/indie-game-night"
+        ]
+      }
+    }
+  },
+  "messages": [
+    {
+      "id": "f9872852-abb4-42a4-bacb-d9cbdb3adea1",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 0,
+      "speaker": "Climate Tech North organiser",
+      "community_id": "climate-tech-north",
+      "role": "human",
+      "text": "A climate game jam for 60 people on a Friday evening. We need a big room and an audience.",
+      "stance": null,
+      "evidence": null,
+      "delay_ms": 2925,
+      "created_at": "2026-10-19T18:47:25.667Z"
+    },
+    {
+      "id": "d57bd3d7-469a-4dbd-a687-9ed371c099b3",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 1,
+      "speaker": "Climate Tech North Bot",
+      "community_id": "climate-tech-north",
+      "role": "bot",
+      "text": "Hello everyone. We're planning a climate game jam for 60 people on a Friday evening. We need a big room and an audience. We can bring promotion through our newsletter of 3,000 readers. Who can help with a space and an audience?",
+      "stance": "question",
+      "evidence": {
+        "quote": "Promotion through our newsletter of 3,000 readers",
+        "verified": true,
+        "field": "offers[2]"
+      },
+      "delay_ms": 2969,
+      "created_at": "2026-10-19T18:47:28.636Z"
+    },
+    {
+      "id": "8806ae46-ed36-4e48-8dc2-08bc8a68f939",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 2,
+      "speaker": "Student Robotics Society Bot",
+      "community_id": "student-robotics-society",
+      "role": "bot",
+      "text": "We can offer a university lecture theatre for 150 people. In return we'd value industry speakers.",
+      "stance": "offer",
+      "evidence": {
+        "quote": "A university lecture theatre for 150 people",
+        "verified": true,
+        "field": "offers[0]"
+      },
+      "delay_ms": 2017,
+      "created_at": "2026-10-19T18:47:30.653Z"
+    },
+    {
+      "id": "55f1ae6d-ba69-453e-a5d8-744da188aeab",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 3,
+      "speaker": "Indie Game Night Bot",
+      "community_id": "indie-game-night",
+      "role": "bot",
+      "text": "We can offer a playtesting audience of 250 regulars. In return we'd value a venue with screens.",
+      "stance": "offer",
+      "evidence": {
+        "quote": "A playtesting audience of 250 regulars",
+        "verified": true,
+        "field": "offers[0]"
+      },
+      "delay_ms": 2406,
+      "created_at": "2026-10-19T18:47:33.059Z"
+    },
+    {
+      "id": "adbe174d-a5e3-43b8-9e30-73518f571db9",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 4,
+      "speaker": "Climate Tech North Bot",
+      "community_id": "climate-tech-north",
+      "role": "bot",
+      "text": "Proposal: Friday 13 Nov at 18:30, Student Robotics Society, Oxford Road campus, for up to 60 people. Student Robotics Society hosts. Indie Game Night brings game developers who give short talks. Does that work for everyone?",
+      "stance": "offer",
+      "evidence": {
+        "quote": "A university lecture theatre for 150 people",
+        "verified": false,
+        "field": null
+      },
+      "delay_ms": 3362,
+      "created_at": "2026-10-19T18:47:36.421Z"
+    },
+    {
+      "id": "306817e2-a342-4d13-a985-743e110bfa09",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 5,
+      "speaker": "Student Robotics Society Bot",
+      "community_id": "student-robotics-society",
+      "role": "bot",
+      "text": "Happy with that. We'll bring a university lecture theatre for 150 people.",
+      "stance": "accept",
+      "evidence": {
+        "quote": "A university lecture theatre for 150 people",
+        "verified": true,
+        "field": "offers[0]"
+      },
+      "delay_ms": 3161,
+      "created_at": "2026-10-19T18:47:39.582Z"
+    },
+    {
+      "id": "3c0bd115-d054-47b8-8f50-c4c43d29b54d",
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "seq": 6,
+      "speaker": "Indie Game Night Bot",
+      "community_id": "indie-game-night",
+      "role": "bot",
+      "text": "Works for us. We'll bring game developers who give short talks.",
+      "stance": "accept",
+      "evidence": {
+        "quote": "Game developers who give short talks",
+        "verified": true,
+        "field": "offers[1]"
+      },
+      "delay_ms": 3481,
+      "created_at": "2026-10-19T18:47:43.063Z"
+    }
+  ],
+  "deal": {
+    "id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+    "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+    "deal": {
+      "title": "Game jam: Climate Tech North × Student Robotics Society × Indie Game Night",
+      "date": "2026-11-13",
+      "time": "18:30",
+      "venue": "Student Robotics Society, Oxford Road campus",
+      "capacity": 60,
+      "description": "Climate Tech North, Student Robotics Society and Indie Game Night team up for a climate game jam on a Friday evening. Student Robotics Society hosts up to 60 people.",
+      "communities": [
+        {
+          "id": "climate-tech-north",
+          "name": "Climate Tech North",
+          "role": "co-host",
+          "brings": [
+            "Promotion through our newsletter of 3,000 readers"
+          ]
+        },
+        {
+          "id": "student-robotics-society",
+          "name": "Student Robotics Society",
+          "role": "host",
+          "brings": [
+            "A university lecture theatre for 150 people"
+          ]
+        },
+        {
+          "id": "indie-game-night",
+          "name": "Indie Game Night",
+          "role": "speaker",
+          "brings": [
+            "Game developers who give short talks"
+          ]
+        }
+      ],
+      "agenda": [
+        {
+          "time": "18:30",
+          "item": "Doors open and welcome"
+        },
+        {
+          "time": "18:50",
+          "item": "Introductions from Climate Tech North, Student Robotics Society and Indie Game Night"
+        },
+        {
+          "time": "19:10",
+          "item": "Build in small teams"
+        },
+        {
+          "time": "20:30",
+          "item": "Wrap-up and next steps"
+        }
+      ],
+      "reasons": [
+        {
+          "communityId": "climate-tech-north",
+          "evidence": "Promotion through our newsletter of 3,000 readers"
+        },
+        {
+          "communityId": "student-robotics-society",
+          "evidence": "A university lecture theatre for 150 people"
+        },
+        {
+          "communityId": "indie-game-night",
+          "evidence": "Game developers who give short talks"
+        }
+      ],
+      "consensus": true,
+      "status": "pending_approval"
+    },
+    "round": 1,
+    "status": "confirmed",
+    "created_at": "2026-10-19T18:47:46.580Z"
+  },
+  "approvals": [
+    {
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "community_id": "climate-tech-north",
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "status": "approved",
+      "note": null,
+      "round": 1,
+      "quick_reasons": [],
+      "history": [
+        {
+          "round": 1,
+          "decision": "approved",
+          "note": null,
+          "at": "2026-10-19T20:02:46.580Z"
+        }
+      ],
+      "updated_at": "2026-10-19T20:02:46.580Z"
+    },
+    {
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "community_id": "indie-game-night",
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "status": "approved",
+      "note": null,
+      "round": 1,
+      "quick_reasons": [],
+      "history": [
+        {
+          "round": 1,
+          "decision": "approved",
+          "note": null,
+          "at": "2026-10-19T19:52:46.580Z"
+        }
+      ],
+      "updated_at": "2026-10-19T19:52:46.580Z"
+    },
+    {
+      "run_id": "218e0123-208d-4f90-838e-0449228e02b6",
+      "community_id": "student-robotics-society",
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "status": "approved",
+      "note": null,
+      "round": 1,
+      "quick_reasons": [],
+      "history": [
+        {
+          "round": 1,
+          "decision": "approved",
+          "note": null,
+          "at": "2026-10-19T19:07:46.580Z"
+        }
+      ],
+      "updated_at": "2026-10-19T19:07:46.580Z"
+    }
+  ],
+  "announcements": [
+    {
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "community_id": "climate-tech-north",
+      "text": "We're teaming up with Student Robotics Society and Indie Game Night for game jam on Fri 13 Nov at 18:30, Student Robotics Society, Oxford Road campus. We're bringing promotion through our newsletter of 3,000 readers. Space for 60 people. RSVP on the event page."
+    },
+    {
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "community_id": "student-robotics-society",
+      "text": "We're teaming up with Climate Tech North and Indie Game Night for game jam on Fri 13 Nov at 18:30, Student Robotics Society, Oxford Road campus. We're bringing a university lecture theatre for 150 people. Space for 60 people. RSVP on the event page."
+    },
+    {
+      "deal_id": "f89b0c30-1936-4e4a-8389-dff03b1f3a0a",
+      "community_id": "indie-game-night",
+      "text": "We're teaming up with Climate Tech North and Student Robotics Society for game jam on Fri 13 Nov at 18:30, Student Robotics Society, Oxford Road campus. We're bringing game developers who give short talks. Space for 60 people. RSVP on the event page."
+    }
+  ]
+}
