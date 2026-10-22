@@ -11,6 +11,7 @@ MIT licensed. The organiser phone app (`/r/:token` and `/inbox/:inboxToken`) is 
 1. Add a community from a public URL. The Scout Bot drafts a card. The organiser edits it and confirms it.
 2. They state a need and pick up to three matches. Evidence on every reason is checked against the named card.
 3. Community Bots negotiate in a group chat. The Scribe compiles a deal only from what was agreed. The date has to be in the future and on a day every community allows. Capacity has to fit every maximum that is set.
+   While the Bots talk, an organiser can post guidance to every Bot, speak for their own community (that community's Bot then sits out its next turn), or pause, resume, and stop the run.
 4. Each organiser gets a phone link. They accept, decline, or renegotiate. Notes are data, not instructions. Three rounds maximum.
 5. When everyone has accepted, the event page flips from Draft to Confirmed.
 
@@ -19,7 +20,7 @@ Dates always come from the system clock.
 ## 10-minute setup
 
 1. Create a Supabase project.
-2. Run `supabase/migrations/0001_init.sql` then `supabase/migrations/0002_rls_advisor.sql` in the SQL editor (or apply them with the Supabase MCP).
+2. Run every file in `supabase/migrations` in filename order in the SQL editor (`0001`, `0002`, then `0010` to `0013`), or apply them with the Supabase MCP.
 3. Copy `.env.example` to `.env` at the repo root and fill in the URL and anon key.
 4. Paste the service role key into `apps/worker/.env` as `SUPABASE_SERVICE_ROLE_KEY`. That file is gitignored. Never put this key in the web app.
 5. `npm install`
@@ -39,7 +40,9 @@ The demo organiser passcode is `community`. Change `settings.organiser_passcode`
 | `npm run worker` | Job runner and approval poll |
 | `npm test` | Unit tests (no database) |
 | `npm run test:rpc` | Calls every RPC with the sample tokens. Needs the env vars. |
-| `npm run seed:sample` | Resets the fixed sample run |
+| `npm run test:db` | Applies every migration to a throwaway Docker Postgres and runs the SQL tests in `supabase/tests`. Needs Docker, not your database. |
+| `npm run seed:sample` | Loads or restores the fixed sample run (marked `is_sample`) |
+| `npm run demo:reset` | Puts sample runs back to round 1 after a demo: approvals pending, history cleared, tokens kept, RSVPs removed. Never touches real runs. |
 | `npm run seed` | Queues draft-card jobs from `seed/communities.json` |
 | `npm run build` | Typecheck and build the web app |
 

@@ -1,0 +1,15 @@
+name: Database
+
+on:
+  push:
+    paths: ["supabase/**", ".github/workflows/db.yml"]
+  pull_request:
+    paths: ["supabase/**", ".github/workflows/db.yml"]
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply every migration to a throwaway Supabase Postgres and run the SQL tests
+        run: bash supabase/tests/run.sh

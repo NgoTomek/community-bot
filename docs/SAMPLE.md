@@ -2,6 +2,8 @@
 
 A fixed mock run is loaded in the `community-bots` Supabase project so the phone app can be built before a worker has negotiated anything. Re-running `npm run seed:sample` (once `apps/worker/.env` has the service role key) resets this run to pending, round 1. The event date is the next Thursday at least 14 days ahead, computed when the seed runs. It is not a hardcoded date.
 
+The run is marked `runs.is_sample = true`. After a demo, `npm run demo:reset` puts every sample run back to round 1 with pending approvals and no RSVPs, keeping the tokens below. It never touches a run where `is_sample` is false.
+
 The organiser passcode for this demo is `community` (`settings.organiser_passcode`). Change it before any real community uses the project.
 
 ## Project

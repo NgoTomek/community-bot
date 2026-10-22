@@ -1,4 +1,4 @@
 -- Do not run this file.
--- The schema is supabase/migrations/0001_init.sql and 0002_rls_advisor.sql.
+-- The schema is every file in supabase/migrations, applied in filename order.
 -- An earlier draft of this file did not match the phone RPC contract
 -- (get_request, list_requests, respond) and allowed anon to read approvals.
