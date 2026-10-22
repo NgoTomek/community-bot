@@ -1,0 +1,72 @@
+name: community-bots
+
+# Local API for people without a Supabase account.
+#   docker compose -f supabase/docker-compose.yml up -d
+# Then copy the URL and keys from the README into .env.
+# Uses the public local-demo JWT secret. Do not expose this port to the internet.
+
+services:
+  db:
+    image: public.ecr.aws/supabase/postgres:17.6.1.136
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: /var/run/postgresql
+      JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      JWT_EXP: "3600"
+    ports:
+      - "55322:5432"
+  rest:
+    image: public.ecr.aws/supabase/postgrest:v14.13
+    depends_on:
+      - db
+    environment:
+      PGRST_DB_URI: postgres://authenticator:postgres@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_CHANNEL_ENABLED: "true"
+    restart: unless-stopped
+  kong:
+    image: public.ecr.aws/supabase/kong:2.8.1
+    depends_on:
+      - rest
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./kong.yml:/home/kong/kong.yml:ro
+    ports:
+      - "55321:8000"
+    restart: unless-stopped
+  bootstrap:
+    image: public.ecr.aws/supabase/postgres:17.6.1.136
+    depends_on:
+      - db
+    volumes:
+      - ./migrations:/migrations:ro
+    environment:
+      PGPASSWORD: postgres
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        i=0
+        until psql -h db -U postgres -d postgres -c 'select 1' >/dev/null 2>&1; do
+          i=$$((i+1))
+          if [ "$$i" -gt 120 ]; then echo "database did not start"; exit 1; fi
+          sleep 1
+        done
+        psql -h db -U supabase_admin -d postgres -c "alter user authenticator with password 'postgres'"
+        if psql -h db -U postgres -d postgres -tAc "select to_regclass('public.runs')" | grep -q runs; then
+          echo "schema already applied"; exit 0
+        fi
+        for f in /migrations/*.sql; do
+          echo "applying $$f"
+          psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -q -f "$$f" || exit 1
+        done
+        psql -h db -U postgres -d postgres -c "notify pgrst, 'reload schema'"
+        echo "migrations applied"
+    restart: "no"
